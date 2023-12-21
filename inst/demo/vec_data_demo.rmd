@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+
+```{r}
+source('util.r')
+
+#installpackageifmissing('box')
+
+rm(list = ls())
+```
+
+```{r}
+source('./vec_handlenan.R')
+source('./data_handlenan.R')
+
+vec_handlenan(c(5,10,NA), 'max')
+
+vec_handlenan(c(5,10,NA), 'min')
+
+vec_handlenan(c(5,10,NA), 100)
+
+a=vec_handlenan(c(5,10,-3,NA), 0)
+
+m=data.frame(a=c(5,10,20),b=c(3,20,10), c=c(6, NA, 15), d=c(2,15,30))
+
+m2=data.frame(a=c(5,10,20),b=c(3, NA,10), c=c(6, NA, 15), d=c(2,15,30))
+
+data_handlenan(m, 1:4, "none")
+
+data_handlenan(m, 1:4, c("none", "min", "min"))
+
+data_handlenan(m2, 1:4, c("none", "min"))
+```
+
+
+```{r}
+source('./data_summarize.r')
+
+data_summarize(m2, c('mean','median', 'numexpressed'))
+
+data_summarize(m2, 1:4, c("expr", "mean", 'median'))
+
+```
+
+```{r}
+source('vec_rescale_curve.r')
+
+xs=0:100
+as=seq(-3,3,by=0.5);
+for(ai in 1:length(as)){
+	a=as[ai];
+	if(ai==1){ plot(xs,vec_rescale_curve(xs,a,xmax=100),type='l'); }
+	else{ lines(xs,vec_rescale_curve(xs,a,xmax=100),type='l'); }
+}
+
+
+log2(m2)
+
+data_rescale(m2, o=list(rescale = 'log2,percentile'))
+```
+
+
+```{r}
+source('./vec_rescale.r')
+
+print(vec_rescale(c(5) ))
+print(vec_rescale(c(5,5) ))
+print(vec_rescale(c(1,20,10,5) ))
+
+print(vec_rescale(c(1,2,2,3,3,10) ))
+
+print(vec_rescale(c(1,2,2,3,4,10) ))
+
+print(vec_rescale(c(1,10,10,5) ))
+
+print(vec_rescale(c(5,10,NaN,5) ))
+
+
+print(vec_rescale(c(1,20,10,5),'range' ))
+
+d=data.frame(
+  a = c(1,20,10,5)
+  ,b = c(1,10,10,5)
+  ,c = c(1,10,10,NaN)
+)
+
+print(vec_rescale(d$a))
+
+```
+

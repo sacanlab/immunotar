@@ -1,0 +1,29 @@
+---
+title: "stat_rank_demo"
+output: html_document
+date: "2023-01-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source('stat_rankeval.r')
+
+
+#Testing examples from page 250 of the lecture notes: https://www.cl.cam.ac.uk/teaching/1516/InfoRtrv/lecture6-evaluation-2x2.pdf
+#showing the calculated result vs. the answer on the slide:
+c(stat_rankeval_map(1:20, c(1,3,6,10,20)), 0.564)
+
+c(stat_rankeval_map(1:15, c(1,3,15)),  0.623)
+
+
+
+#Testing examples from lecture notes 
+stat_rankeval_map(1:10, c(1,3,6,9,10))
+
+stat_rankeval_map(1:10, c(2,5,6,7,8))
+
+
+```

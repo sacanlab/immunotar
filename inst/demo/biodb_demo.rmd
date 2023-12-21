@@ -1,0 +1,164 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+rm(list = ls())
+
+```
+
+```{r}
+source('config.r')
+config('datadir')
+config('depmapdbfile')
+```
+
+```{r}
+source('depmapdb.r')
+depmapdb_searchsamples(c('ALL','B-cell'),where='sex="Female"')[1:10,]
+
+depmapdb_searchsamples('T-cell')
+
+enrich_depmap(c('MEGF10', 'GPC2', 'ALK'), 'Rhabdomyosarcoma')
+```
+
+```{r}
+source('depmapdb.r')
+depmapdb_getgenedependency(1:100, c('A1BG','A2M','NAT1'))[1:10,]
+depmapdb_getgenedependency('T-cell', c('CD19','A2M','NAT1'))[1:10,]
+
+```
+
+
+```{r}
+source('biodb.r')
+
+godb_searchterm('apoptotic')[1:10,]
+
+godb_goid2genesymbols(6915)[1:10]
+
+godb_goids2genesymbols(c(6915,6924)) # this gives a dataframe. table doesn't fit and you'll only see the id column. scroll to the right to see the genesymbols.
+
+godb_goids2genesymbols(c(6915,6924),asframe=F)[1:10]
+```
+
+
+```{r }
+source('biodb.r')
+uniprotdb_allgenesymbols()
+```
+
+
+```{r}
+source('biodb.r')
+source('bmes_download.r')
+source('config.r')
+
+compartmentsdb_getcellsurfacegenes()
+jiangproteomedb_getsummary_maxabundance()
+
+a=opentarget_getgenes(c("MEGF10", "ALK", "GPC2", "CD28"))
+
+b=opentargetsurface_getgenes(a$genesymbol)
+```
+
+
+```{r}
+##To download opentarget from web and add as squlite file 
+source('opentargetdb.R')
+opentarget_db('opentarget')
+
+
+```
+
+```{r}
+source('biodb.r')
+
+gtexdb_getsummary()[1:10,]
+
+gtexdb_getsummary(c('MEGF10','TP53'))
+```
+
+```{r}
+
+
+source('biodb.r')
+jiangproteomedb_getsummary_maxabundance()
+jiangproteomedb_getsummary_maxabundance()[1:10,]
+jiangproteomedb_getsummary_maxabundance(c('MEGF10','TP53'))
+jiangproteomedb_getsummary_maxabundance(c('MEGF10','TP53','TSPAN6'))
+
+```
+
+```{r}
+source('biodb.r')
+biodb_file('evodevodb')
+biodb_connect('jiangproteomedb')
+biodb_file('jiangproteomedb')
+evodevodb_getsummary()
+evodevodb_getsummary(c('MEGF10','TP53'))
+
+jiangproteomedb_getsummary_maxabundance()
+
+```
+
+```{r}
+source('theratardb.r')
+
+theratardb_moas('ALK')
+
+```
+
+```{r}
+source('theratardb.r')
+source('biodb.r')
+
+theratardb_searchdisease('neuroblastoma')
+
+theratardb_searchdisease(c('neuroblastoma','melanoma'))
+
+theratardb_searchdisease('melanoma')
+
+theratardb_searchdisease('Ewing')
+
+theratardb_disease2genesymbols('Cutaneous melanoma', asframe=F)
+
+theratardb_disease2genesymbols('Cutaneous melanoma')
+
+theratardb_disease2genesymbols('Brain cancer')
+
+theratardb_disease2genesymbols('Ewing sarcoma')
+
+theratardb_disease2genesymbols('Cutaneous melanoma',moa=c('Inhibitor','Suppresor') )
+
+theratardb_disease2genesymbols('Hypertension', status='Phase 2',moa=c('Inhibitor','Antagonist'))
+
+theratardb_disease2genesymbols('Hypertension', minstatusscore=8, moa=NULL)
+
+biodb_file('theratardb')
+
+theratardb_disease2genesymbols('%', moa=c('CAR-T-Cell-Therapy%','adc_antigen'),minstatusscore=1)
+
+theratardb_disease2genesymbols('%', minstatusscore=1)
+
+## 1. Any drug surface protein -> filter to minstatus = 1 
+
+
+```
+
+```{r}
+#source('theratardb.r')
+source('biodb.r')
+d=opentargetsurface_getgenes(c('CD38','SDC1','ALK','CD19'))
+```
+
+```{r}
+source('theratardb.r');
+source('biodb.r')
+source('util.r')
+
+theratardb_disease2genesymbols('neuroblastoma', asframe=c('genesymbol','higheststatus_'))
+
+```

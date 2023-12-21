@@ -1,0 +1,19 @@
+Package: immunotar
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: c( person("Rawan", "Shraim", email="shraimr@chop.edu", role = c("aut",
+  "cre", "cph") ), person("Ahmet", "Sacan", role = c("ths","aut", "cph")), person("Sharon",
+  "Diskin",role = c("ths")), person("John", "Maris",role = c("ths")) )
+Description: What the package does (one paragraph).
+License: Free for non-commercial use. Contact authors for redistribution and/or commercial
+  use.
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: foreach, doParallel, yaml, plyr, RSQLite, tidyverse, DBI, rappdirs, openxlsx,
+  data.table, tools, BiocManager, devtools, here, parallel, pkgload, readxl, stringr,
+  this.path, writexl
+Comment1: Only modify the copy present in the src.r/ folder. It will be automatically
+  copied and override the copy in the R package folder.
+Comment2: You do not need to list the Imports above manually. running packager_makepackage()
+  will automatically add the required packages to the list.

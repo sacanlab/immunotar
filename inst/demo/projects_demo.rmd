@@ -1,0 +1,215 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+rm(list = ls())
+#options(warn=2)
+```
+
+## 
+```{r}
+source('util.r')
+list_map_parallel(c(5,6,7), sqrt)
+
+```
+
+
+
+```{r}
+source('projects.r')
+projects_optimweightsandcurves(p,Iweights=NULL,Icurves=1, method=c('Nelder-Mead','checkzeros'), trace=1)
+#projects_optimweightsandcurves(p,Iweights=NULL,Icurves=1, method=c( 'checkzeros'), trace=1)
+
+```
+
+```{r}
+source('project.r'); source('config.r')
+
+yamlfile=file.path(config('datadir'),'rms_test/demo_rms_project.yml');
+p=project_load(yamlfile);
+
+a=project_run(yamlfile)
+
+
+res=projects_optimweightsandcurves(p,Iweights=NULL, Icurves=NULL, method=c('SANN','Nelder-Mead','checkzeros'), trace=1)
+res
+
+cat(yaml::as.yaml(list(colweight=res$weights, colcurve=res$curves)))
+
+p=project_run(p, weight=res$weights, curves=res$curves, getfull=T)
+```
+
+
+```{r}
+##Testing importfiles functions 
+
+source('project.r')
+
+a=project_load('~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/data/demo_project_withincludes.yml',dosummarize = F, loaddatasets = F, dorescale = F)
+
+b=project_load('~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/data/demo_project_withinclude.yml',dosummarize = F, loaddatasets = F, dorescale = F)
+
+
+######Testing genereport
+
+a=project_load(file.path(config('datadir'),'demo_project2.yaml'))
+
+ex=project_run(file.path(config('datadir'),'demo_project2.yaml'), getfull=T)
+
+a=ex$reportforgenes
+
+
+```
+
+```{r}
+source('projects.r')
+#res=projects_getparranges(p,Iweights=NULL, Icurves=NULL)
+#res=projects_getparranges(p,Iweights=NULL,stepsize='10%',repeatifimproved=T,maxsteps=10)
+res=projects_getparranges(p,Iweights=NULL,stepsize='10%',repeatifimproved=F,maxsteps=10)
+res
+```
+
+```{r}
+###Testing Parallel here 
+rm(list=ls())
+source('config.r')
+source('projects.r')
+
+#List all datasets we have with known targets:
+
+ps = list(
+  file.path(config('datadir'),'demo_project2.yaml')
+  ,file.path(config('datadir'),'rms_test/demo_rms_project.yml')
+)
+
+tictoc::tic();
+ps = projects_runonce(ps,doparallel=T) #runonce here so the data is available, making repeated calls to projects_optimweightsandcurves() faster.
+tictoc::toc();
+
+optim_proj=projects_optimweightsandcurves(ps, method=c('SANN'), trace=1, reltol=1)
+# res
+
+
+```
+
+```{r}
+#now enrich it with opentargets
+#Just optimize the opentargets, without changing the others.
+
+source('projects.r')
+
+ps2 = list(
+  file.path(config('datadir'),'demo_project2.yaml')
+  ,file.path(config('datadir'),'rms_test/demo_rms_project.yml')
+)
+
+#res=projects_optimweightsandcurves(ps,Iweights=c('opentarget_...'), Icurves=c('opentarget_...'), method=c('SANN','Nelder-Mead','checkzeros'), trace=1,reltol=0.0001)
+#res=projects_optimweightsandcurves(ps, method=c('SANN','Nelder-Mead','checkzeros'), trace=1)
+
+res=projects_optimweightsandcurves(ps2, method=c('Nelder-Mead'), trace=1, doparallel=F)
+
+```
+
+
+```{r}
+####USE THIS EXAMPLE 08.22.23
+
+rm(list=ls())
+
+source('projects.r')
+source('util.r')
+source('config.r')
+
+ps3 = list(
+  file.path(config('datadir'),'demo_project2.yaml')
+  ,file.path(config('datadir'),'demo_project3.yaml')
+)
+
+ps_result=projects_run(ps3)
+
+
+tictoc::tic()
+config('datadir')
+
+optim_res=projects_optimweightsandcurves(ps3, method=c('SANN', 'Nelder-Mead'), trace=1, doparallel=T, numcores=5, maxit=50)
+
+tictoc::toc()
+
+###Include a logfile 
+
+tictoc::tic()
+
+optim_res=projects_optimweightsandcurves(ps3, method=c('SANN', 'Nelder-Mead'), trace=1, reltol=0.01, doparallel=T, numcores=5, methodcontrols=list('SANN'=list(maxit=10)))
+
+
+tictoc::toc()
+
+##doparallel=F 
+
+tictoc::tic()
+
+optim_res=projects_optimweightsandcurves(ps3, method=c('SANN'), trace=1, doparallel=F, maxit=50)
+
+tictoc::toc()
+```
+
+
+```{r}
+###Optim example 
+source('projects.r')
+source('util.r')
+source('config.r')
+
+ps3 = list(
+  file.path(config('datadir'),'demo_project2.yaml')
+  ,file.path(config('datadir'),'demo_project3.yaml')
+)
+
+ps3=projects_runonce(ps3);
+
+##doparallel=F 
+
+tictoc::tic()
+
+optim_res=projects_optimweightsandcurves(ps3, method=c('SANN'), trace=1, doparallel=F, reltol=10)
+
+tictoc::toc()
+
+```
+
+
+```{r}
+fr <- function(x) {   ## Rosenbrock Banana function
+  x1 <- x[1]
+  x2 <- x[2]
+  (100 * (x2 - x1 * x1)^2 + (1 - x1)^2)
+}
+#myoptim(c(-1.2,1), fr, list(reltol=0.1),method='SANN')
+optim(c(-1.2,1), fr, control=list(reltol=0.01),method='SANN')
+```
+
+
+```{r}
+##Troubleshooting code 
+
+r1=projects_optimsetup(ps2)
+
+ps=r1$ps; o=r1$o; weights=r1$weights; curves=r1$curves; Iweights=r1$Iweights; Icurves=r1$Icurves; par=r1$par;
+
+o=list_merge(list(
+    method='SANN' #optimization method. checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. Can be a list of methods if you want to perform them in serial.
+    ,enforceweightsign=T # use enforcesign=T so that when a weight that doesn't match the expected sign is given, we return -Inf.
+    ,logbestfile='' #Excel file to log best results. if non-empty, we'll log the final best values.
+  ),o,list());
+
+if(o$maximize && (is.null(o$control)||is.null(o$control$fnscale))){ o$control$fnscale=-1; }
+
+myoptim(par,projects_evalweightandcurvevector, o, ps=ps, weights=weights,Iweights=Iweights, enforceweightsign=o$enforceweightsign, curves=curves,Icurves=Icurves,stopwhenbestpossibleisfound=T)
+
+if(o$maximize && (is.null(o$control)||is.null(o$control$fnscale))){ o$control$fnscale=-1; }
+
+```
+
+

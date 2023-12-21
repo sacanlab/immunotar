@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('getcoloption.r')
+
+o=list(
+	rescale='percentile'  #default scale.
+	,coloptions=list(
+		gtex=list(  #all options for a column can be given here.
+			rescale='rangemap0100'
+			,handlena=0
+		)
+		,depmap=list(
+			rescale='rangemap0100'
+		)
+	)
+	,colrescale=list(  #scale of columns can be given here. overrides coloptions.
+		gtex='none'
+		,compartments='rangemap0100'
+	)
+)
+
+#coloptions$cirfess and colrescale$cirfess are not available, so the default is used.
+getcoloption(o, 'rescale','cirfess')
+
+#coloptions$depmap$scale is available so it is used.
+getcoloption(o,'scale','depmap')
+
+#colrescale$gtex (overrides coloptions$gtex$rescale) is available so it is used. 
+getcoloption(o,'rescale','gtex')
+
+getcoloption(o,'weight','someothercolumn') #this will result in NULL and give a warning, because a specified/default/suggested weight is not available for this column.
+
+
+o=list(colrescale=list(gtex='curve'), colrescaleparam=list(gtex=5));
+getcoloption(o, 'rescale', 'gtex')
+getcoloption(o, 'rescaleparam', 'gtex')
+```

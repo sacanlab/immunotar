@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+rm(list = ls())
+```
+
+```{r}
+source('config.r')
+
+# Create the demo Excel dataset file
+d=data.frame(exp1=c(1,2,3,4,5,6,7), exp2=c(4,5,9,NA,16,12,1), exp3=c(3,7,10,9,100,12,71))
+rownames(d)=c("MEGF10", "PLK1", "EEF2", "ZNF497", "ACOX2", 'FakeGene','GP1BB')
+
+xlsfile=file.path(config('datadir'),'/demo_experiment.xlsx');
+if(file.exists(xlsfile)){ warning(sprintf('xlsfile [%s] already exists. You must remove it if you\'d like it rewritten here.',xlsfile));
+}else{
+	source('util.r')
+	xls_write(xlsfile,d,rowNames=T,open=T);
+}
+
+
+```
+
+
+## Using YAML configuration file: Run.
+```{r}
+source('util.r'); installpackageifmissing("tictoc")
+tictoc::tic();
+
+##Testing with 2 expression datasets 
+source('project.r'); source('config.r')
+yamlfile=file.path(config('datadir'),'demo_project.yml');
+p=project_run(yamlfile, getfull=T, dbg=F) #use dbg=T for debugging messages
+p
+tictoc::toc()
+```
+
+
+
+## Using YAML configuration file: Load, make changes, and run.
+```{r}
+
+##Testing with only a single expression datatset 
+source('project.r'); source('config.r'); source('biodb.r')
+
+yamlfile=file.path(config('datadir'),'demo_project2.yaml');
+proj=project_load(yamlfile);
+
+# Make any changes to the project before calling project_run().
+proj$colweight$gtex='3 total';
+
+proj_run=project_run(proj, getfull=T)
+
+data=proj_run$datawithscore
+
+data2=proj_run$weighteddata
+
+
+```
+
+## Code-based configuration: Provide project configuration as a list().
+```{r}
+############ Doesn't work as of 07/06/2023
+source('project.r')
+proj=list(
+	dataset='__ALLHUMANGENES__'
+	#dataset='../data/demo_experiment.xlsx'
+	,knowntargets=c('LCT','PIGB')
+	,enrich=list(
+		enrichtypes='gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'
+		,depmapids='Rhabdomyosarcom'
+	)
+	,colweight=list(
+		gtex='-1 total' #this will be divided by the number of column names that start with "gtex_"
+		,gtex_numsamplesgt10tpm=0
+		,gtex_numsamplesgt10tpm_nobrain=0
+	)
+	,colcurve=list(
+	  gtex=5
+	)
+	,getfull=T
+)
+
+proj=project_load(proj)
+
+#the dataset now contains all human genes, but I'll keep only some to speed up this demo. Comment out the following line to use all genes.
+source('enrich.r')
+proj$data=proj$data[1:100,]
+d=project_run(proj)
+
+
+
+
+```
+

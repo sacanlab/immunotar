@@ -1,0 +1,43 @@
+---
+title: "biodb_troubleshoot"
+output: html_document
+date: "2023-09-03"
+---
+
+```{r}
+#	setwd("~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/src.r/")
+source('util.r'); installpackageifmissing('readxl')
+source("config.r")
+source("biodb.r")
+
+example=readxl::read_xlsx(paste0(config('datadir'), '/ewing_sarcoma.xlsx'))
+
+example$...1[1:5]
+
+#ahmet: This does not work. example$...1 produces c('1','2','3',...) instead of genesymbols.
+#rownames(example)=example$...1
+#example$...1=NULL
+
+
+example=as.data.frame(example)
+rownames(example)=as.character(example[,1])
+example=example[,-1]
+
+gtexdb_getsummary(rownames(example))
+
+```
+
+
+```{r}
+source('biodb.r')
+genesymbols=c('ALK','MEGF10','Unknown')
+ret=biodb_query_wheregenesymbols("gtexdb", "SELECT * FROM rna_tpm_summary",genesymbols)
+print(ret)
+
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

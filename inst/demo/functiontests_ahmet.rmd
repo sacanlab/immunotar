@@ -1,0 +1,25 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+rm(list = ls())
+```
+
+```{r}
+source('biodb.r')
+biodb_file('gtexdb')
+
+
+m=matrix(c(5,3,6,2,10,20,NaN,15,20,10,15,30), 4, 3)
+source('data_score.r')
+
+data_score(m)
+```
+
+```{r}
+source('getcoloption.r')
+getcoloption(list(),'handlenan','gtex_numsamplesgt10tpm_nobrain')
+```

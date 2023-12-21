@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+rm(list=ls())
+source('util.r')
+source('config.r')
+
+```
+
+```{r}
+d=data.frame(exp1=c(1,2,3,4,5,6,7,11,13,15, 18, 19, 20))
+rownames(d)=c("MEGF10", "PLK1", "EEF2", "ZNF497", "ACOX2", 'FakeGene','FakeGene2', "TSPAN6",'EPHA5','EPHA2', 'ALK', 'CD19', 'LCAM1')
+
+```
+
+```{r}
+source('enrich.r')
+source('data_enrich.r')
+
+data_enrich(d,list(enrichtypes='evodevo_pediatric', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
+
+
+
+```
+
+
+```{r}
+source('enrich.r')
+d=enrich_gtex(d)
+colnames(d)
+```
+
+```{r}
+source('enrich.r')
+
+depmapdb_searchsamples('Ewing')
+#enrich_gtex(d)
+
+enrich_depmap(d, 'Rhabdomyosarcoma')
+
+enrich_depmap(d, c('Rhabdomyosarcoma','Ewing'),collate='separate',mergefunc=mean)
+
+```
+
+```{r}
+source('enrich.r')
+enrich_compartments_sp(d)
+```
+
+
+```{r}
+source('enrich.r')
+enrich_go(d,'muscle')
+
+enrich_go(c('ALK', 'GPC2', 'MEGF10', 'CD19', 'CD276'), 'Muscle development')
+```
+
+
+```{r}
+
+source('enrich.r')
+enrich_depmap(d,c('ALL','B-cell'))
+```
+
+```{r}
+source('data_enrich.r')
+data_enrich(d,list(enrichtypes='healthyprot,gtex,evodevo,depmap,compartments_sp,cirfess_spc,go', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
+```
+
+```{r}
+source('data_enrich.r')
+enrich_uniprot(d)
+enrich_uniprot(c('ALK', 'GPC2', 'CD19'))
+```
+
+
+```{r}
+enrich_opentarget(d)
+```
+
+
+```{r}
+source('enrich.r')
+source('biodb.r')
+
+enrich_theratarsurface(d, 'neuroblastoma')
+enrich_theratarsurface(d, '%')
+
+```
+
+```{r}
+source('data_enrich.r')
+data_enrich(d,list(enrichtypes='healthyprot', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
+```
+
+
+```{r}
+
+```
+```{r}
+source('biodb.r')
+source('config.r')
+
+
+#Checking the information we have on some GPI-anchored proteins.
+uniprotdb_getecmtotallength(c('CD52','Thy1','GP2','CRIPTO-1'))
+
+##Filtering opentargets list 
+
+opentarget=read.delim("~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Databases/pmtl_v3.0.csv", sep=",")
+
+write.csv(opentarget.surface, file="~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Databases/opentarget.surfaceprotonly.csv", row.names = F, quote = F)
+
+
+
+
+```

@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+config() looks for a file named config.yourcomputername.yml or config.yml to load your settings.
+If you want to use a different config file, call config_file('your.config.file.yml') or set the environment variable R_CONFIG_FILE.
+If you want to use a different subconfig, call config_subconfig('yoursubconfigname') or set the environment variable R_CONFIG_SUBCONFIG.
+
+
+```{r}
+config_file() #this will print the active config file.
+config_subconfig() #this will print the active subconfig
+
+# Basic usage: just call config(varname)
+config('datadir')
+config('biodbdir')
+
+# To change a setting from code, use, e.g.,
+config('myvariable','myvalue')
+# You can later retrieve that setting:
+config('myvariable')
+
+# If you make a change to the config.yml file and want the changes to be reloaded, call config_reset(). The settings that are changed manually (ie., from code) will not be reset; if you want to reset them as well, call config_reset(resetcoded=TRUE).
+config_reset()
+
+```
+
+
+```{r}
+source('util.r')
+source('config.r')
+
+config('config.dbg',T);
+config_reset()
+
+config_file()
+config_subconfig()
+config('datadir')
+
+catf('zoz.config.coded: \n%s\n', str_indentlines(yaml::as.yaml(.GlobalEnv$zoz.config.coded)))
+catf('zoz.config: \n%s\n',str_indentlines(yaml::as.yaml(.GlobalEnv$zoz.config)))
+
+```
+```{r}
+
+```
+ 
