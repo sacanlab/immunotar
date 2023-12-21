@@ -109,6 +109,7 @@ project_loaddatasets=function(proj,dosummarize=T, dorescale=T, ...){
 # or do manual analysis, before you call project_run()
 # First argument is multi-purpose. It can be a yamlfile, or a project structure.
 
+#' @export
 project_load=function(yamlfile,loaddatasets=T,dosummarize=T, dorescale=T){
 #  source('util.r'); 
   installpackageifmissing('yaml');
@@ -175,6 +176,7 @@ project_prepare=function(proj,o=list(),...){
 }
 
 # proj can be an already loaded configuration, or a configuration filename.
+#' @export
 project_run=function(proj,o=list(),...){
   o = modifyList(list(
     getfull=T #if True, we return the entire project structure. When false, we only return the score vector.

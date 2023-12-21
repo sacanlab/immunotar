@@ -9,6 +9,7 @@
 #' The input to this function is a disease key-word
 #' The output is the list of diseases found that match the key-word exactly or have the key-word within the phrase. 
 #' 
+#' @export
 theratardb_searchdisease = function(queries,exact=FALSE,where=''){
   return(biodb_textsearch('theratardb','gene_disease',queries,c('disease'),exact,where,getfields='DISTINCT(disease) AS disease',combinequerieswith='OR'));
 }
@@ -17,6 +18,7 @@ theratardb_searchdisease = function(queries,exact=FALSE,where=''){
 #' No input is required for this function. 
 #' The output is the list of distinct MOAs in the database. 
 #' 
+#' @export
 theratardb_moas = function(){
   ss=biodb_query('theratardb','SELECT DISTINCT(moas) FROM gene_disease');
   print(ss);
@@ -35,6 +37,7 @@ theratardb_moas = function(){
 #asframe can be True or a list of fieldnames. When asframe is false, we only retrieve the genesymbol.
 
 
+#' @export
 theratardb_disease2genesymbols = function(diseases,asframe=T,moa=NULL,status=NULL,minstatusscore=NULL,exact=NULL,where=''){
   if(is.null(exact)||!exact){
     r=theratardb_searchdisease(diseases,exact=exact);

@@ -4,6 +4,7 @@
 #source('packager.r');
 
 #TODO: Remove src.r/mysetwd.r or find an alternative solution.
+# See available options in packager.r::makepackage()
 immunotar_makepackage=function(o=list(),...,dryrun=F,quiet=F){
   o = list_merge(list(
   	pkgname='immunotar'

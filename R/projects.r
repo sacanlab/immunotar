@@ -21,6 +21,7 @@ projects_run_single=function(p,requireknowntargets=T,runonce=F,...){
 #' projects_run is used to generate the IMMUNOTAR score for  each protein similar to project_run however, this is when you have multiple different cancer expression datasets. These datasets would have to be specified separately in the yaml file or in the project structure within R. This function will run through each project separately and project a structure with the outputs for each project. 
 #' To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. You can select the number of cores using the option numcores= OR the default is 2 less than the total cores on your computer. 
 
+#' @export
 projects_run=function(ps,requireknowntargets=T,runonce=F,doparallel=T,...){
   if(is.namedlist(ps)){ ps=list(ps); }
   #print(paste0('projects_run::21:args: ',list(...)))
@@ -138,6 +139,7 @@ projects_optimsetup=function(ps,o=list(),...){
 #' To log the optimized weights in an excel file, the user can feed that using the logbestfile= parameter. 
 #' 
 #' 
+#' @export
 projects_optimweightsandcurves=function(ps,o=list(),...){
   r=projects_optimsetup(ps,o,...); ps=r$ps; o=r$o; weights=r$weights; curves=r$curves; Iweights=r$Iweights; Icurves=r$Icurves; par=r$par;
   o=list_merge(list(

@@ -9,6 +9,7 @@ options(timeout=100000)
 #' The input to this function includes the disease names of interest
 #' The output is a data-frame of meta data from DepMap that includes the depmapid's, the primary disease, the cancer subtype, and the cell line that was tested in DepMap
 #' 
+#' @export
 depmapdb_searchsamples = function(queries,searchinfields=c('samplecollectionsite','primarydisease','subtype','lineage','lineagesubtype','cellosaurusncitdisease'),exact=FALSE,where='',getfields=NULL){
 #  source('biodb.r')
   t=biodb_textsearch('depmapdb','sampleinfo',queries,searchinfields,exact,where,getfields=getfields);
@@ -32,6 +33,7 @@ depmapdb_searchsamples = function(queries,searchinfields=c('samplecollectionsite
 # I recommend you manually identify the depmapids you want to use and provide their numeric ids as input.
 # If depmapids is text, we use depmapdb_searchsamples() to retrieve the ids.
 # This returns one row per sample (depmapid), so each gene may have multiple rows in the returned result. Multiple rows for a gene are combined in enrich_depmap() to get a single probability value for each gene.
+#' @export
 depmapdb_getgenedependency = function(depmapids=c(),genesymbols=c(),o=list()){
   o = modifyList(list(
     project='crispr' #can be one of crispr|achilles
