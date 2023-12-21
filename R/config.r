@@ -40,6 +40,7 @@ config_autofill=function(s){
 # if you want to reset a previously saved file and trigger a new search, use config_file("")
 # if usecomputername=T, we use computer-specific config file (if found), e.g., config.sacanlap.yml. The default T/F is obtained from config_('config.file.usecomputername')
 # if useenv=T, we use getenv('R_CONFIG_FILE'). The default for useenv is retrieved using config_('config.file.useenv')
+#' @export
 config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useenv=NULL, dbg=F) {
    # attr(config_file,'file')=NULL; #reset for testing purposes. comment out later.
   if(!missing(file)){
@@ -104,6 +105,7 @@ config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useen
 
 ###############################################################
 # set/get the subconfig name.
+#' @export
 config_subconfig=function(subconfig=NULL,useenv=NULL){
   if(!missing(subconfig)){
     config('config.subconfig',subconfig);
@@ -195,6 +197,7 @@ config_loadconfigfile=function(file=NULL){
   .GlobalEnv$zoz.config=y;
   return(y);
 }
+#' @export
 config_reset=function(resetcoded=NULL){
   .GlobalEnv$zoz.config=NULL;
   if(is.null(resetcoded)){ resetcoded=config_('config.resetcodedonreset'); }
@@ -226,6 +229,7 @@ config_=function(varname){
 #useonlystored=T is used for internal purposes; when true, we use the stored or already loaded configuration and we do not use loadconfigfile.
 #.GlobalEnv$zoz.config.coded is used for values stored with config(varname,newvalue)
 #.GlobalEnv$zoz.config is used for values loaded from config file
+#' @export
 config = function(varname,newvalue,useonlystored=F){
   if(missing(varname)){
     if(is.null(.GlobalEnv$zoz.config)){ config_loadconfigfile(); }

@@ -302,6 +302,7 @@ thisdir=function(){
   return(getwd());
 }
 cdhere=function(){ setwd(thisdir()); }
+cd=function(dir=NULL){ if(missing(dir)){ cdhere(); }else{ setwd(dir); }; }
 ###############################################################
 #if basedir itself is a relative path, we'll resolve it using here::here().
 io_resolvepath=function(path,basedir=NULL){
