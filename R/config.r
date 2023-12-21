@@ -91,7 +91,10 @@ config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useen
   }
   if(isempty(file)){
     pkg=mypackagename();
-    if(!isempty(pkg)){ file=system.file('config.yml',package=pkg); }
+    if(!isempty(pkg)){
+       file=system.file('config.yml',package=pkg);
+       if(dbg){ catf('Detected that I am in-package [%s], got package config file [%s]',pkg,var_pick(var_tobool(file),file,'')); }
+    }
   }
 
   if(isempty(file)||!io_isfile(file)){
