@@ -6,6 +6,8 @@
 # config.subconfig='' #provide a subconfig name. The 'default' subconfig is always loaded first, the parameters in this subconfig, when present, will override those loaded from the default subconfig. subconfig can be a csv of multiple subconfig names.
 # config.useenv=T  #whether to use the environment variables R_CONFIG_FILE and R_CONFIG_SUBCONFIG when determining the value of config.file and config.subconfig
 # config.file.usecomputername=T #whether we look for config.[computername].yml
+# config.file.usepackagename=T #whether we lookfor configfile.[packagename].yml --> only applicable if this code is part of an installed package.
+# config.file.usehomedir=T #whether we lookfor configfile in user's homefolder. We look for rconfig.yml instead of config.yml (and its computername, packagename variations).
 # config.subconfig.usecomputername=T #if a config.subconfig is not already set, whether we use this computername as a subconfig.
 # config.resetonchdir=F  # whether to reset the config (so a new config_file can be searched and loaded) if the cwd changes.
 # config.resetcodedonreset=F  #whether to reset the variables that are set from code (by calls to config(varname,val)) when we do a reset on chdir or when we reload a config file.
@@ -41,7 +43,7 @@ config_autofill=function(s){
 # if usecomputername=T, we use computer-specific config file (if found), e.g., config.sacanlap.yml. The default T/F is obtained from config_('config.file.usecomputername')
 # if useenv=T, we use getenv('R_CONFIG_FILE'). The default for useenv is retrieved using config_('config.file.useenv')
 #' @export
-config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useenv=NULL, dbg=F) {
+config_file = function(file=NULL, usecomputername=NULL, usepackagename=NULL, usehomedir=NULL, searchupward=NULL, useenv=NULL, dbg=F) {
    # attr(config_file,'file')=NULL; #reset for testing purposes. comment out later.
   if(!missing(file)){
     if(dbg&&!isempty(file)){ catf('Got file input: [%s]',file); }    
@@ -69,8 +71,13 @@ config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useen
   }
 
   if(is.null(usecomputername)){ usecomputername=config_('config.file.usecomputername'); }
-  if(usecomputername){ filenames=c(paste0('config.',sys_computername(),'.yml'),'config.yml'); }
-  else{ filenames='config.yml'; }
+  if(is.null(usepackagename)){ usepackagename=config_('config.file.usecomputername'); }
+  if(is.null(usehomedir)){ usepackagename=config_('config.file.usehomedir'); }
+  pkgname=mypackagename();
+
+  filenames=c('config.yml');
+  if(usecomputername){ filenames=c(paste0('config.',sys_computername(),'.yml'),filenames); }
+  if(usepackagename&&!isempty(pkgname)){ filenames=c(paste0('config.',pkgname,'.yml'),filenames); }
  
   if(is.null(searchupward)){ searchupward=config_('config.file.searchupward'); }
   for(filename in filenames){
@@ -89,12 +96,18 @@ config_file = function(file=NULL, usecomputername=NULL, searchupward=NULL, useen
       }
     }
   }
-  if(isempty(file)){
-    pkg=mypackagename();
-    if(!isempty(pkg)){
-       file=system.file('config.yml',package=pkg);
-       if(dbg){ catf('Detected that I am in-package [%s], got package config file [%s]',pkg,var_pick(var_tobool(file),file,'')); }
+  if(isempty(file)&&usehomedir){
+    for(filename in filenames){
+      tryfile=io_name(sys_userhomedir(),gsub('config','rconfig',filename));
+      if(io_isfile(tryfile)){
+        file=tryfile;
+        catfif(dbg,'Found config file in userhomedir: [%s]',file);
+      }
     }
+  }
+  if(isempty(file)&&!isempty(pkgname)){
+    file=system.file('config.yml',package=pkgname);
+    if(dbg){ catf('Detected that I am in-package [%s], got package config file [%s]',pkgname,var_pick(var_tobool(file),file,'')); }
   }
 
   if(isempty(file)||!io_isfile(file)){
@@ -267,6 +280,8 @@ config = function(varname,newvalue,useonlystored=F){
     defaults=list(
       config.useenv=T
       ,config.file.usecomputername=T
+      ,config.file.usepackagename=T
+      ,config.file.usehomedir=T
       ,config.file.searchupward=T
       ,config.subconfig.usecomputername=T
       ,config.resetonchdir=F

@@ -11,7 +11,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports: foreach, doParallel, yaml, plyr, RSQLite, tidyverse, DBI, rappdirs, openxlsx,
-  data.table, tools, BiocManager, devtools, here, parallel, pkgload, readxl, stringr,
+  data.table, tools, BiocManager, devtools, fs, here, parallel, pkgload, readxl, stringr,
   this.path, writexl
 Comment1: Only modify the copy present in the src.r/ folder. It will be automatically
   copied and override the copy in the R package folder.

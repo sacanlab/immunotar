@@ -11,6 +11,7 @@ immunotar_makepackage=function(o=list(),...,dryrun=F,quiet=F){
   	,rsync_exclude_more=arr_csv('Archive/,sandbox.r,sandbox.rmd,packager.r,packager_demo.rmd,mysetwd.r,config.*.yml,git.r')
   	,rsyncmore=list(
   		list(src=io_name(thisdir(),'../data/'),dest='inst/data/', include=c('demo*','optimized*','defaultsettings.yml') )
+  		,list(src=io_name(thisdir()),dest='inst/', include=c('config.yml') )
   		)
   ),o,list(...));
   packager_makepackage(o,dryrun=dryrun,quiet=quiet);

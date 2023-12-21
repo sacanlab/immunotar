@@ -1,0 +1,38 @@
+default:
+  datadir: '{userdatadir}'
+  biodbdir: '{datadir}/biodb'
+  uniprotdbfile: '{biodbdir}/uniprotdb.human.go.sqlite'
+  compartmentsdbfile: '{biodbdir}/compartmentsdb.human.surface.sqlite'
+  gtexdbfile: '{biodbdir}/gtexdb.summary.sqlite'
+  evodevodbfile: '{biodbdir}/evodevodb.summary.sqlite'
+  godbfile: '{biodbdir}/godb.assoc.sqlite'
+  cirfessdbfile: '{biodbdir}/cirfessdb.human.spc.sqlite'
+  jiangproteomedbfile: '{biodbdir}/jiangproteomedb.summary.sqlite'
+  theratardbfile: '{biodbdir}/theratardb.gene_disease.sqlite'
+  opentargetdb_populate: true
+
+devel: #these settings are meant for developers only (not for library/enduser)
+  git.remoteurl: 'https://github.com/sacanlab/immunotar.git'
+  git.autopull: 1 #whether to pull when a push attempt tells us there are commits in the remoteurl.
+
+  #The following file and url parameters will already default to those values. Leaving here as comments as examples in case you need to modify them.
+  #depmapdbfile: '{biodbdir}/depmapdb.sqlite'
+  #depmapdburl: 'https://sacan.biomed.drexel.edu/lic/downloadfile?file=depmapdb.sqlite'
+
+rawanlaptop:
+  config.importsubconfig: devel
+  datadir: '/Users/shraimr/Library/CloudStorage/Box-Box/RMS PhD Project/RMS_DIA/Code/data'
+  biodbdir: '/Users/shraimr/Library/CloudStorage/Box-Box/RMS PhD Project/RMS_DIA/biodb'
+
+
+c02dk0sqml7j:
+  config.importsubconfig: devel
+  datadir: '/Users/shraimr/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/data'
+  biodbdir: '/Users/shraimr/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/biodb'
+  demodir: '/Users/shraimr/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/doc/pancancer_dataset'
+  
+
+# You can change the defaults above, or set your computer-specific parameters by using a config group with your computername.
+# You can also use a computer-specific file, e.g., config.yourcomputername.yml for settings that you want to use on a specific computer.
+# Use "config.importfile: ..." or "config.importsubconfig: ..." to import the settings in another file or another subconfig.
+

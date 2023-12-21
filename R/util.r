@@ -52,6 +52,7 @@ sprintfyaml=function(...){
 }
 #shorthand for cat(sprintf(...))
 catf=function(...){ cat(str_ensuresuffix(sprintfyaml(...),'\n')); }
+catfif=function(cond,...){ if(cond){cat(str_ensuresuffix(sprintfyaml(...),'\n')); } }
 #shorthand for message(sprintf(...))
 msgf=function(...){ message(sprintfyaml(...)); }
 msgfif=function(cond,...){ if(cond){ message(sprintfyaml(...)); }}
@@ -432,6 +433,9 @@ sys_iswindows=function(){
 }
 sys_ismac=function(){
   return(sys_os()=='osx');
+}
+sys_userhomedir=function(){
+  return(fs::path_home());
 }
 ###############################################################
 sys_open=function(file){
