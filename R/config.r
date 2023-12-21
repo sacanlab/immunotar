@@ -72,7 +72,7 @@ config_file = function(file=NULL, usecomputername=NULL, usepackagename=NULL, use
 
   if(is.null(usecomputername)){ usecomputername=config_('config.file.usecomputername'); }
   if(is.null(usepackagename)){ usepackagename=config_('config.file.usecomputername'); }
-  if(is.null(usehomedir)){ usepackagename=config_('config.file.usehomedir'); }
+  if(is.null(usehomedir)){ usehomedir=config_('config.file.usehomedir'); }
   pkgname=mypackagename();
 
   filenames=c('config.yml');
