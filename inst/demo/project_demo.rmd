@@ -71,7 +71,7 @@ proj=list(
 	#dataset='../data/demo_experiment.xlsx'
 	,knowntargets=c('LCT','PIGB')
 	,enrich=list(
-		enrichtypes='gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'
 		,depmapids='Rhabdomyosarcom'
 	)
 	,colweight=list(

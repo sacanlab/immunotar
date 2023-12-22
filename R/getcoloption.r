@@ -13,7 +13,7 @@ suggestedoptions=function(){
         weight=-1/8 #TODO: Possible - Change so that it divides by 8 automatically in the code in case we change number of columns for GTEx in the future 
         ,handlenan=0 #NOTE: We probably need to change this to zero. e.g., PIGY is not available in Gtex, but that is due to no-detection (it is not due to PIGY not being considered in Gtex).
       )
-      ,evodevo=list(
+      ,evodevo_pediatric=list(
         weight=-1
         ,handlenan=0 #NOTE: Similar to GTEx 
       )

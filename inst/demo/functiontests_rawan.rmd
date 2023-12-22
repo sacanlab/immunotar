@@ -48,7 +48,7 @@ d=enrich_compartments_sp(c)
 e=enrich_depmap(d, "Rhabdomyosarcoma")
 f=enrich_gtex(e)
 g=enrich_jiangprot(f)
-h=enrich_evodevo(g)
+h=enrich_evodevo_pediatric(g)
 d=enrich_cirfess_spc(data)
 
 

@@ -41,7 +41,7 @@ rescale: 'percentile' #change default scale. (default is 'percentile')
 weight: -1 #Set the default weight. If you set this, remember to override this default value for columns that should have an opposite signed weight.
 colweight: #specify weight for individual columns
   gtex: "-1 each" #will be divided by the number of gtex_ columns.
-  evodevo: "-1 each"
+  evodevo_pediatric: "-1 each"
   healthyprot: -1
   depmap: +1
   compartments_sp: +1

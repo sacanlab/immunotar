@@ -15,7 +15,7 @@ dataset:
   #summarytypes: '' #by default, we summarize a dataset. To prevent data summarization, use summarytypes='', or define dosummarize=0
 
 enrich: #parameters to be passed into data_enrich()
-  enrichtypes: 'gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc,uniprot'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,uniprot'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
   #some enrich types require additional arguments. provide them here.
   depmapids: 'Osteosarcoma' #this can be numeric id(s) or text(s) to search
   #goids: 'Muscle Development'
@@ -23,7 +23,7 @@ enrich: #parameters to be passed into data_enrich()
 
 handlenan: 0   #change default handlenan. (default is 'none')
 colhandlenan: #specify handlenan for individual columns
-  evodevo: 'min'
+  evodevo_pediatric: 'min'
   expr: 'min'
   healthyprot: 'min'
 
@@ -34,7 +34,7 @@ rescale: 'percentile' #change default scale. (default is 'percentile')
 weight: -1 #change default weight. (default is +1).
 colweight: #specify weight for individual columns
   gtex: "-1 each" #will be divided by the number of gtex_ columns.
-  evodevo: "-1 each"
+  evodevo_pediatric: "-1 each"
   healthyprot: -1
   depmap: 1
   compartments_sp: 3

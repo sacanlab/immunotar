@@ -15,8 +15,8 @@ dataset:
   #summarytypes: '' #by default, we summarize a dataset. To prevent data summarization, use summarytypes='', or define dosummarize=0
 
 enrich: #parameters to be passed into data_enrich()
-  enrichtypes: 'gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot,opentarget'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
-  #enrichtypes: 'gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot,opentarget'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  #enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
   #some enrich types require additional arguments. provide them here.
   depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search
   goids: 'Muscle Development'
@@ -24,7 +24,7 @@ enrich: #parameters to be passed into data_enrich()
 
 handlenan:  0 #change default handlenan. (default is 'none')
 colhandlenan: #specify handlenan for individual columns
-  #evodevo: 'min'
+  #evodevo_pediatric: 'min'
   healthyprot: 'min'
   expr: 'min'
 
@@ -37,8 +37,8 @@ colweight: #specify weight for individual columns
   gtex: 0 #will be divided by the number of gtex_ columns.
   gtex_numtissuesgt10tpm: -0.5
   gtex_numtissuesgt10tpm_nobrain: -2.4
-  evodevo: 0 
-  evodevo_maxrpkm: -1.1
+  evodevo_pediatric: 0 
+  evodevo_pediatric_maxrpkm: -1.1
   healthyprot: -1
   depmap: 2.6
   compartments_sp: 4

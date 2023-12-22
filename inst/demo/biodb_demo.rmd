@@ -97,8 +97,8 @@ source('biodb.r')
 biodb_file('evodevodb')
 biodb_connect('jiangproteomedb')
 biodb_file('jiangproteomedb')
-evodevodb_getsummary()
-evodevodb_getsummary(c('MEGF10','TP53'))
+evodevodb_pediatric_getsummary()
+evodevodb_pediatric_getsummary(c('MEGF10','TP53'))
 
 jiangproteomedb_getsummary_maxabundance()
 

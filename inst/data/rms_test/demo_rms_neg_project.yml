@@ -33,7 +33,7 @@ colscale: #specify scale for individual columns
 weight: 1 #change default weight. (default is +1).
 colweight: #specify weight for individual columns
   gtex: "-1 each" #will be divided by the number of gtex_ columns.
-  evodevo: "-1 each"
+  evodevo_pediatric: "-1 each"
   healthyprot: -1
   depmap: 1
   compartments_sp: 3

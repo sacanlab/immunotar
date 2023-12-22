@@ -67,7 +67,7 @@ enrich_depmap(d,c('ALL','B-cell'))
 
 ```{r}
 source('data_enrich.r')
-data_enrich(d,list(enrichtypes='healthyprot,gtex,evodevo,depmap,compartments_sp,cirfess_spc,go', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
+data_enrich(d,list(enrichtypes='healthyprot,gtex,evodevo_pediatric,depmap,compartments_sp,cirfess_spc,go', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
 ```
 
 ```{r}
