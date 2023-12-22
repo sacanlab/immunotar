@@ -411,7 +411,7 @@ opentarget_getgenes = function(genesymbols){
 
 ###################################################
 #can take a dataframe as input (one of the columns must be "genesymbol") or a list of genesymbols.
-getsurfacegenes=function(genesymbols, spc_score=0, comp_score=3){
+getsurfacegenes=function(genesymbols, spc_score=0, comp_score=0){
   if(is.data.frame(genesymbols)){
     d=genesymbols;
     surfgenes=getsurfacegenes(d$genesymbol);

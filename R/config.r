@@ -98,7 +98,7 @@ config_file = function(file=NULL, usecomputername=NULL, usepackagename=NULL, use
   }
   if(isempty(file)&&usehomedir){
     for(filename in filenames){
-      tryfile=io_name(sys_userhomedir(),gsub('config','rconfig',filename));
+      tryfile=io_name(sys_userhomedir(),gsub('^config','rconfig',filename));
       if(io_isfile(tryfile)){
         file=tryfile;
         catfif(dbg,'Found config file in userhomedir: [%s]',file);

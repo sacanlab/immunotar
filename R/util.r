@@ -628,7 +628,7 @@ ensurecsvlist=function(s, alloweditems=NULL, trim=F){
     #Check for any invalid/unsupported alloweditems
     notfound=setdiff(s,alloweditems)
     if(length(notfound) > 0 ){
-      stop(paste0('Invalid type: ["', paste(notfound, collapse = ", "), '"',']'))
+      stop(sprintf('Invalid item(s): [%s]. Allowed items re: [%s].',str_scsv(notfound),str_scsv(alloweditems)));
     }
   }
   return(s);

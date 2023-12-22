@@ -4,8 +4,8 @@
 # The datafile may contain {datadir} are {userdatadir}, which are replaced with myconfig('datadir'), etc.
 # File names (unless they already exist in the cwd) are adjusted relative to the folder containing this yml file.
 
-#TODO: Go through this file and move settings that are common to all projects into defaultsettings.yml.
-importfile: 'defaultsettings.yml'
+#TODO: Go through this file and move settings that are common to all projects into project_defaultparams.yml.
+importfile: 'project_defaultparams.yml'
 
 #outfile: 'demo_project_result.xlsx'
 knowntargets: 'ALK,MEGF10'

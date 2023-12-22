@@ -5,7 +5,7 @@
 # File names (unless they already exist in the cwd) are adjusted relative to the folder containing this yml file.
 
 #You can import other yaml files into this project. See demo_project_withincludes.yml for an example.
-#importfile: '{datadir}/defatultsettings.yml'
+#importfile: '{datadir}/project_defaultparams.yml'
 
 #outfile: 'demo_project_result.xlsx'
 knowntargets: 'ALK,MEGF10'
@@ -28,10 +28,10 @@ datasets:  #Remove "XXX" if you neeed to specify multiple datasets.
 #This function will be applied after a dataset is loaded (and before any handlenan/enrich/scale processing is done.)
 #The function definition should already be available in R before you run this project.
 #You can provide separate applyfunction's to each dataset by setting their own applyfunction.
-dataset_applyfunction: 'dataset_applyfunction_sample'; 
+dataset_applyfunction: 'dataset_applyfunction_sample'
 
 enrich: #parameters to be passed into data_enrich()
-  enrichtypes: 'gtex,evodevo,healthyprot,depmap,compartments_sp,cirfess_spc'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
   #some enrich types require additional arguments. provide them here.
   depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search
   #goids: 'Notch binding'

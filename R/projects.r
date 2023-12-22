@@ -98,7 +98,7 @@ projects_evalweightandcurvevector=function(v, ps, weights,Iweights,curves,Icurve
   
   out=mean(psevals, na.rm = T);
   
-  if(stopwhenbestpossibleisfound && out==1.0){
+  if(stopwhenbestpossibleisfound && out==1.0 && !is.na(out)){
     cat('Reached best possible evaluation.\n');
     .GlobalEnv$projects_evalweightandcurvevector_foundbestpossible=T;
   }
