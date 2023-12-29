@@ -6,7 +6,6 @@
 
 #this is a helper function for projects_run_ to run for a single project.
 # Extracted here into a separate function so we can more easily run in parallel.
-
 projects_run_single=function(p,requireknowntargets=T,runonce=F,...){
 #  source('project.r')
   if(requireknowntargets && is.null(p['knowntargets'])){ stop('The projects you provide need to have knowntargets'); }
@@ -16,11 +15,9 @@ projects_run_single=function(p,requireknowntargets=T,runonce=F,...){
   return(p);
 }
 
-##use this to run each project once, to ensure their data is prepared.
-
+###############################################################
 #' projects_run is used to generate the IMMUNOTAR score for  each protein similar to project_run however, this is when you have multiple different cancer expression datasets. These datasets would have to be specified separately in the yaml file or in the project structure within R. This function will run through each project separately and project a structure with the outputs for each project. 
 #' To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. You can select the number of cores using the option numcores= OR the default is 2 less than the total cores on your computer. 
-
 #' @export
 projects_run=function(ps,requireknowntargets=T,runonce=F,doparallel=T,...){
   if(is.namedlist(ps)){ ps=list(ps); }
@@ -29,12 +26,13 @@ projects_run=function(ps,requireknowntargets=T,runonce=F,doparallel=T,...){
   return(ps);
 }
 
-#use this to run each project once, to ensure their data is prepared.
-
+###############################################################
+##use this to run each project once, to ensure their data is prepared.
 projects_runonce=function(ps,requireknowntargets=T,doparallel=T,...){  
   return(projects_run(ps,requireknowntargets,runonce=T,doparallel=doparallel,...));
 }
 
+###############################################################
 projects_prepare=function(ps,doparallel=T,...){
   if(is.namedlist(ps)){ ps=list(ps); }
   ps = list_map(ps,project_prepare,doparallel=doparallel,...);
@@ -136,7 +134,7 @@ projects_optimsetup=function(ps,o=list(),...){
 #' The use can select what attribute weights and curves need optimizing which can be inputted by listing the column names in the Iweights or Icurves parameters 
 #' Several optimization methods can be used and they include: checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. One or several optimization methods can be used in a single run. 
 #' The optimization will start at the original weights used. The user can maintain the sign of the weights by setting enforceweightsign=T, this is the default setting.
-#' To log the optimized weights in an excel file, the user can feed that using the logbestfile= parameter. 
+#' To log the optimized weights in an excel file, the user can feed that using the logfile= parameter. 
 #' 
 #' 
 #' @export
@@ -145,12 +143,13 @@ projects_optimweightsandcurves=function(ps,o=list(),...){
   o=list_merge(list(
     method='SANN' #optimization method. checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. Can be a list of methods if you want to perform them in serial.
     ,enforceweightsign=T # use enforcesign=T so that when a weight that doesn't match the expected sign is given, we return -Inf.
-    ,logbestfile=NULL 
+    ,logfile=NULL  #provide true or a filename. if true, project_addoptimlog() will use a default log file 'project_optimization.log.xlsx'
+    ,bestparamsfile=FALSE #provide true or a filename. if true, project_updateoptimizedparams() will use a default file 'project_optimizedparams.yml'.
     ),o,list(...));
 
   if(length(o$method)>1){
     for(method in o$method){
-      res=projects_optimweightsandcurves(ps,list_merge(o,list(method=method)),logbestfile=o$logbestfile);
+      res=projects_optimweightsandcurves(ps,list_merge(o,list(method=method)));
       o$weights=res$weights;
       o$curves=res$curves;
     }
@@ -169,12 +168,13 @@ projects_optimweightsandcurves=function(ps,o=list(),...){
   curves[Icurves]=res$par[(length(Iweights)+1):length(res$par)];
   res$weights=weights;
   res$curves=curves;
-  
-  if(!is.null(o$logbestfile)){
-    try(xlsxlogfile(res, o$logbestfile), silent = T)
-    try(updateoptimizedyaml(res, 'optimizedyaml.yml'))
-  }
-  else{return(res)}
+
+  #if(!is.null(o$bestparamsfile)){   try(project_updateoptimizedparams(res, o$bestparamsfile), silent = T);  }
+  #if(!is.null(o$logfile)){ try(project_addoptimlog(res, o$logfile), silent = T);   }
+  #TODO: Removed try(). Rawan will check if that causes a problem. If no problem, remove this comment and the duplicate code above.
+  if(!is.null(o$bestparamsfile)){ project_updateoptimizedparams(res, o$bestparamsfile);  }
+  else{ warnf('You did not provide the bestparamsfile option. If you want to save the parameters found from this optimization, set bestparamsfile to TRUE or a file name.'); }
+  if(!is.null(o$logfile)){ project_addoptimlog(res, o$logfile);   }
   
   return(res);
 
@@ -182,7 +182,6 @@ projects_optimweightsandcurves=function(ps,o=list(),...){
 
 ###############################################################
 #Scan weights & return value ranges that don't affect the eval.
-
 projects_getparranges=function(ps,o=list(),...){
   r=projects_optimsetup(ps,o,...); ps=r$ps; o=r$o; weights=r$weights; curves=r$curves; Iweights=r$Iweights; Icurves=r$Icurves; par=r$par;
 

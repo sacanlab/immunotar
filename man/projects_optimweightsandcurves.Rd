@@ -6,7 +6,7 @@
 The use can select what attribute weights and curves need optimizing which can be inputted by listing the column names in the Iweights or Icurves parameters
 Several optimization methods can be used and they include: checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. One or several optimization methods can be used in a single run.
 The optimization will start at the original weights used. The user can maintain the sign of the weights by setting enforceweightsign=T, this is the default setting.
-To log the optimized weights in an excel file, the user can feed that using the logbestfile= parameter.}
+To log the optimized weights in an excel file, the user can feed that using the logfile= parameter.}
 \usage{
 projects_optimweightsandcurves(ps, o = list(), ...)
 }
@@ -15,5 +15,5 @@ projects_optimweightandcurves is used to optimize the weights and curves inputed
 The use can select what attribute weights and curves need optimizing which can be inputted by listing the column names in the Iweights or Icurves parameters
 Several optimization methods can be used and they include: checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. One or several optimization methods can be used in a single run.
 The optimization will start at the original weights used. The user can maintain the sign of the weights by setting enforceweightsign=T, this is the default setting.
-To log the optimized weights in an excel file, the user can feed that using the logbestfile= parameter.
+To log the optimized weights in an excel file, the user can feed that using the logfile= parameter.
 }

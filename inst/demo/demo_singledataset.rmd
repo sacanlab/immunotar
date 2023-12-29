@@ -1,0 +1,26 @@
+---
+title: "Using a Single Dataset"
+output: html_document
+date: "2023-12-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+source('util.r')
+source('project.r'); source('config.r')
+
+yamlfile=io_which('demo_singledataset.yml','{datadir}');
+p=project_run(yamlfile, getfull=T) #use dbg=T for debugging messages
+
+p$data
+```
+
+```{r}
+knitr::opts_current$get('results')
+```

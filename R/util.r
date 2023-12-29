@@ -48,14 +48,21 @@ sprintfyaml=function(...){
     if(is.null(arg)){ args[[i]]='NULL'; }
     else if(!is.numeric(arg)&&!is.logical(arg)&&!is.character((arg))){ args[[i]]=str_indentlines(yaml::as.yaml(arg)); }
   }
+  if(length(args)==1){ return(sprintf('%s',args)); }
   return(do.call(sprintf,args));
 }
 #shorthand for cat(sprintf(...))
-catf=function(...){ cat(str_ensuresuffix(sprintfyaml(...),'\n')); }
-catfif=function(cond,...){ if(cond){cat(str_ensuresuffix(sprintfyaml(...),'\n')); } }
+catf=function(...){ cat(str_ensureeol(sprintfyaml(...))); }
+catfif=function(cond,...){ if(cond){cat(str_ensureeol(sprintfyaml(...))); } }
 #shorthand for message(sprintf(...))
 msgf=function(...){ message(sprintfyaml(...)); }
+warnf=function(...){ message(sprintfyaml(...)); }
 msgfif=function(cond,...){ if(cond){ message(sprintfyaml(...)); }}
+stopf=function(...){ stop(sprintfyaml(...)); }
+stopfif=function(cond,...){ if(cond){  stop(sprintfyaml(...)); } }
+#warning() prints newline at the end in R, but not in Rstudio chunk. No good way of distinguishing between the two. I add a new line to avoid multiple warnings printing on the same line.
+warnf=function(...){  warning(str_ensureeol(sprintfyaml(...))); }
+warnfif=function(cond,...){ if(cond){ warning(str_ensureeol(sprintfyaml(...))); } }
 
 
 vec_isunique=function(vec){return(!any(duplicated(vec))); }
@@ -330,7 +337,7 @@ io_resolvepath=function(path,basedir=NULL){
     goodpathsources=pathsources[I];
     if(length(goodpaths)==0){ return(herepath); } #none of them already exist. return herepath.
     else if(length(goodpaths)>1){
-      warning(sprintf('Path [%s] exist under %s:\n%s\nThe first of these locations will be used.', path,str_scsv(goodpathsources),str_lined(str_ensureprefix(goodpaths,'  '))));
+      warnf('Path [%s] exist under %s:\n%s\nThe first of these locations will be used.', path,str_scsv(goodpathsources),str_lined(str_ensureprefix(goodpaths,'  ')));
     }
     return(goodpaths[[1]]);
   }
@@ -341,6 +348,45 @@ io_resolvepath=function(path,basedir=NULL){
   }
   return(io_name(basedir,path)); 
 }
+###############################################################
+#locate an existing file, making config replacements (e.g., replace '{datadir}' as set in config). look in the package folder too.
+#if not found and defaultdir is not given, re return the name unchanged, so the caller would then effectively interpret it to be under cwd.
+#if multiple defaultdir's are given, we search each, but use the first when the file doesn't exist.
+#defaultdir itself may contain 
+io_which=function(name,defaultdir=NULL){
+  if(io_isfileordir(name)){ return(name); }
+  if(grepl('{',name,fixed=T)){
+    name=config_autofill(name);
+    if(io_isfileordir(name)){ return(name); }
+  }
+  if(io_isrealpath(name)){ return(name); }
+
+  defaultdirorig=defaultdir;
+  if(!isempty(defaultdir)){
+    for(i in seq_along(defaultdir)){
+      defaultdir[[i]]=io_which(defaultdir[[i]]);
+      file=io_name(defaultdir[[i]],name);
+      if(io_isfileordir(file)){ return(file); }
+    }
+  }
+
+  pkgname=mypackagename();
+  if(!isempty(pkgname)){
+    #by default, also look in the package's data/ folder. don't even require {datadir} to be part of the requested defaultdirs.
+    #if( '{datadir}' %in% defaultdirorig)
+    {
+      file=system.file(paste0('data/',name),package=pkgname)
+      if(!isempty(file)){ return(file); }
+    }
+    file=system.file(name,package=pkgname)
+    if(!isempty(file)){ return(file); }
+  }
+
+  if(!isempty(defaultdir)){ return(io_name(defaultdir[[1]],name)); }
+  return(name);
+}
+
+###############################################################
 #search for a file (e.g., config.yml) in current folder or in parent folders.
 #startingfolder can be a single folder or a list of folders.
 #If startingfolder is not given, we use [herepath(), getwd(), thisdir()]
@@ -524,7 +570,7 @@ fieldname_match=function(haystack,needle){
     return(haystack[I]);    
   }
   else if(nnz>1){ #this should never happen, because we now use the longest match above.
-    warning(paste0('There are multiple hits for needle [',needle, '] in haystack. Returning NULL.'));
+    warnf('There are multiple hits for needle [%s] in haystack. Returning NULL.',needle);
   }
   return(NULL);  
 }
@@ -535,7 +581,7 @@ fieldname_match=function(haystack,needle){
 data_Icols=function(d,cols=NULL){
   if(is.null(cols)){
     if(ncol(d)==0){
-      warning('Empty data matrix, hence no numerical columns.\n');
+      warnf('Empty data matrix, hence no numerical columns.');
       return(c());
     }
     return(1:ncol(d));
@@ -554,7 +600,7 @@ data_Icols=function(d,cols=NULL){
       if(length(ind)==0){ #allow prefix-selection, but only if prefix is followed by '_'
         ind=which(unlist(lapply(colnames(d), function(f) startsWith(f, ensuresuffix(col,'_')) )))
       }
-      else if(length(ind)>1){ warning(paste0('Multiple column names match [',col,'].\n')); }
+      else if(length(ind)>1){ warnf('Multiple column names match [%s].',col); }
       if(length(ind)==0){
         stop(paste0('Cannot find column name [',col,'].'));
       }
@@ -752,7 +798,7 @@ list_map_parallel=function(a, fun, numcores=NULL, ...){
 list_map=function(a,fun,doparallel=F,numcores=NULL, trace=1, ...){
   if(!is.null(numcores)){
     if(numcores <= 1 & doparallel){
-      warning('Number of Cores is less than 2 and parallel computing will be turned off')
+      warnf('Number of Cores is less than 2 and parallel computing will be turned off')
       doparallel=F
     }
   }
@@ -772,46 +818,8 @@ list_map=function(a,fun,doparallel=F,numcores=NULL, trace=1, ...){
 ##############################################################
 # get a file path. if filename is not a full path and it does not already exist, return a path in config('datadir').
 getdatafile=function(filename){
-  if(is.null(filename)){ filename=paste0(config('datadir'),'/', filename); }
-  if(!grepl(filename,'/',fixed=T) && !grepl(filename,'\\',fixed=T) && !file.exists(filename)){
-    filename=paste0(config('datadir'),filename);
-  }
-  return(filename);
+  return(io_which(filename,'{datadir}'));
 }
-
-#Update optimized YAML file function
-updateoptimizedyaml=function(paramlist,filename=NULL){
-  library(yaml)
-  yamlfile=getdatafile(filename);
-  if(file.exists(yamlfile)){ yaml=read_yaml(yamlfile); }
-  else{ yaml=list(); }
-  if(is.null(yaml$score) || paramlist$value > yaml$score){
-    yaml$colweight=paramlist$weights
-    yaml$score=paramlist$value
-  }
-  write_yaml(yaml, yamlfile)
-}
-  
-
-###############################################################
-#Save log excel file and best weights in YAML file
-#by Rawan.
-xlsxlogfile=function(r, logfile, ...){
-  logfile=getdatafile(logfile);
-  library(plyr)
-  if(file.exists(logfile)){
-      rs=readxl::read_xlsx(logfile)
-  }
-  else{rs=data.frame()}
-  r=as.array(c(r$value, unlist(r$weights)))
-  names(r)[1]="score"
-  r=as.data.frame(t(r))
-  rs=rbind.fill(rs, r)
-  writexl::write_xlsx(rs, logfile)
-  
-  return(rs) 
-}
-
 
 ###############################################################
 #find and remove opts (and prefixed args) from argv
@@ -908,6 +916,7 @@ exec_locateexe=function(exe,morefolders=c(),dieifnotfound=T){
 	return(out);
 }
 ###############################################################
+io_mkdir=function(dir){ dir.create(dir); }
 io_mkdirif=function(dir){
   if(!io_isdir(dir)){
     if(io_isfile(dir)){ stop(sprintf('Cannot create directory [%s], b/c it already exists as a file.',dir)); }
@@ -943,7 +952,7 @@ io_rsyncpath=function(path){
   return(path);
 }
 #when include is given (e.g., '*.r'), we only transfer those files. exclusions are applied within those includes.
-io_rsync=function(src,dest,include=c(),exclude=c(),dryrun=F,quiet=F){
+io_rsync=function(src,dest,include=c(),exclude=c(),dryrun=F,echo=T){
   args=c('-auvzm');
   if(dryrun){ args=c(args,'--dry-run'); }
   if(dir.exists(src)){ src=str_ensuresuffix(src,'/'); dest=str_ensuresuffix(dest,'/'); }
@@ -972,12 +981,12 @@ io_rsync=function(src,dest,include=c(),exclude=c(),dryrun=F,quiet=F){
   src=io_cygpathif(src,rsyncexe); dest=io_cygpathif(dest,rsyncexe);
   args=c(args,src,dest);
 
-  if(!quiet){
-    cat(sprintf('Running rsync command:\n'));
-    cat(paste(c('  ',rsyncexe,args),collapse=' ')); cat('\n');
+  if(echo){
+    catf(sprintf('Running rsync command:'));
+    catf(paste(c('  ',rsyncexe,args),collapse=' '));
   }
-	#s=system2(rsyncexe,shQuote(args),stdout=!quiet,stderr=!quiet);
+	#s=system2(rsyncexe,shQuote(args),stdout=echo,stderr=echo);
   s=system2(rsyncexe,shQuote(args),stdout=T,stderr=T); #for some bizarre reason, unless we capture stdout/stderr, rsync doesn't actually work. So, we need to get output even if we don't display it.
-  if(!quiet){ cat(str_lined(s)); }
+  if(echo){ catf(str_lined(s)); }
   if(!isempty(excludefromtempfile)){ file.remove(excludefromtempfile); }
 }

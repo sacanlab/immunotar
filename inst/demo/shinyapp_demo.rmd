@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+rm(list = ls())
+
+
+
+```
+```{r}
+############ Doesn't work as of 07/06/2023. TODO: why not?
+source('project.r')
+proj=list(
+	dataset='__ALLHUMANGENES__'
+	#dataset='../data/demo_experiment.xlsx'
+	,knowntargets=c('LCT','PIGB')
+	,enrich=list(
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'
+		,depmapids='Rhabdomyosarcom'
+	)
+	,colweight=list(
+		gtex='-1 total' #this will be divided by the number of column names that start with "gtex_"
+		,gtex_numsamplesgt10tpm=0
+		,gtex_numsamplesgt10tpm_nobrain=0
+	)
+	,colcurve=list(
+	  gtex=5
+	)
+	,getfull=T
+)
+
+proj=project_load(proj)
+```
+
+```{r}
+source('util.r'); source('config.r')
+
+library(shiny)
+ui=fluidPage(
+  "Hello, world!"
+)
+server=function(input, output, session) {
+}
+shinyApp(ui, server)
+
+```

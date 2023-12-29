@@ -5,16 +5,16 @@
 
 #TODO: Remove src.r/mysetwd.r or find an alternative solution.
 # See available options in packager.r::makepackage()
-immunotar_makepackage=function(o=list(),...,dryrun=F,quiet=F){
+immunotar_makepackage=function(o=list(),...,dryrun=F,echo=T){
   o = list_merge(list(
   	pkgname='immunotar'
-  	,rsync_exclude_more=arr_csv('Archive/,sandbox.r,sandbox.rmd,packager.r,packager_demo.rmd,mysetwd.r,config.*.yml,git.r')
+  	,rsync_exclude_more=arr_csv('Archive/,shinyapp/,sandbox.r,sandbox.rmd,packager.r,packager_demo.rmd,mysetwd.r,config.*.yml,git.r')
   	,rsyncmore=list(
   		list(src=io_name(thisdir(),'../data/'),dest='inst/data/', include=c('demo*','optimized*','project_defaultparams.yml') )
   		,list(src=io_name(thisdir()),dest='inst/', include=c('config.yml') )
   		)
   ),o,list(...));
-  packager_makepackage(o,dryrun=dryrun,quiet=quiet);
+  packager_makepackage(o,dryrun=dryrun,echo=echo);
 }
 
 
