@@ -39,3 +39,8 @@ o=list(colrescale=list(gtex='curve'), colrescaleparam=list(gtex=5));
 getcoloption(o, 'rescale', 'gtex')
 getcoloption(o, 'rescaleparam', 'gtex')
 ```
+
+```{r}
+
+
+```

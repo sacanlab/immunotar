@@ -10,7 +10,7 @@ suggestedoptions=function(){
     curve = 0
     ,coloptions=list(
       gtex=list(
-        weight=-1/8 #TODO: Possible - Change so that it divides by 8 automatically in the code in case we change number of columns for GTEx in the future 
+        weight=-1 #TODO: Possible - Change so that it divides by 8 automatically in the code in case we change number of columns for GTEx in the future 
         ,handlenan=0 #NOTE: We probably need to change this to zero. e.g., PIGY is not available in Gtex, but that is due to no-detection (it is not due to PIGY not being considered in Gtex).
       )
       ,evodevo_pediatric=list(
@@ -23,7 +23,7 @@ suggestedoptions=function(){
       )
       ,depmap=list(
         weight=1
-        ,handlenan='none' #Depmap is not an exhaustive/genome-scale/unbiased assay, so genes that are not assayed should be left as 'nan'.
+        ,handlenan='min' #Depmap is not an exhaustive/genome-scale/unbiased assay, so genes that are not assayed should be left as 'nan'.
       )
       ,compartments_sp=list(
         weight=1
@@ -37,10 +37,10 @@ suggestedoptions=function(){
         weight=NULL #go terms are custom for each project and we cannot assume a particular weight. You must set the weight yourself.
         ,handlenan=0 #if it is not in the database, we can assume the gene is not associated with that go term.
       )
-      ,uniprot_ecmtotallength=list(
-        weight=1
-        ,handlenan=0
-      )
+      ,uniprot_ecmtotallength=list( weight=1, handlenan=0 )
+      ,opentargetsurface=list( weight=1, handlenan=0 )
+      ,expr=list(weight="+1 each")
+      ,expr_numlowexpressed=list(weight=-1)
     )
   ));
 }
@@ -66,6 +66,7 @@ suggestedoptions=function(){
 #% maintain colind as you select or add columns to the data.
 #gettingdefault__=T is used internally/recursively to get colname='DEFAULT'.
 #gettingsuggested__=T is used internally/recursively to get recommended values.
+
 getcoloption=function(o, optionname, colname, gettingdefault__=F, gettingsuggested__=F, warn=T){
   found=F #whether we find an option specifically/explicitly for this column.
   ocolname=NULL; #the actual index name we find in o (may be exactly colname, or a prefix_ of it.)
@@ -80,9 +81,7 @@ getcoloption=function(o, optionname, colname, gettingdefault__=F, gettingsuggest
   else if(is.list(o)){
     default=o[[optionname]] # %this is the default for all columns.
     out=default;
-#    source('struct_getcolentry.r')
-    
-    
+        
     #%% Check if option is set in o.coloptions.colname.optionname
     if('coloptions' %in% names(o) && !is.null(o$coloptions)){
       #struct_getcolentry essentially gets o$coloptions$colname, while allowing for a prefix search.
@@ -123,7 +122,7 @@ getcoloption=function(o, optionname, colname, gettingdefault__=F, gettingsuggest
     msg=sprintf('Cannot find a value for: column [%s] option [%s]. Using NULL as the option value. You can set a column-specific value or a default value for all columns in your project configuration. ',colname, optionname);
     if(optionname=='weight'){ msg=sprintf('%s Note that using NULL means this column is ignored in Score calculations. A positive weight (e.g., +1) should be used for columns that want to maximize (ie., the higher the better); and a negative weight (e.g, -1) should be used for columns you want to minimize (ie., the lower the better).', msg); }
     else if(optionname=='handlenan'){ msg=sprintf('%s Using NULL means missing data values for this column are ignored in the Score calculations (giving other columns more weight). You can use 0, "min", "max", "mean" if you would like to replace the missing values.',msg); }
-    warning(sprintf("%s\n",msg));
+    warning(sprintf('%s\n',msg));
   }
 
   if(!is.null(out)){ attr(out,'found')=found; attr(out,'ocolname')=ocolname; }
@@ -133,25 +132,27 @@ getcoloption=function(o, optionname, colname, gettingdefault__=F, gettingsuggest
 
 ###############################################################
 #get the weight vector for the specified colnames.
+
 getcoloption_weights=function(colnames,o=list()){
-  if(!is.null(o$weights)){
+  if(!is.null(o[['weights']])){
     if(!all(colnames %in% names(o$weights))){
       cat(paste0('---WARNING: weights argument is given, but it does not contain a value for every colnames. Filling in the missing ones from other option parameters.\n'));
       missingcolnames = setdiff(colnames, names(o$weights));
-      o$weights = list_merge(weights, getcoloption_weights(missingcolnames, list_merge(o,list(weights=NULL))));
+      o$weights = list_merge(o$weights, getcoloption_weights(missingcolnames, list_merge(o,list(weights=NULL))));
     }
     return(o$weights[colnames]);
   }
 
   numcols=length(colnames);
   ocolnames=c(); #the colname that we find in the option (may be exactly colname or a prefix_)
-  W=rep(1, numcols);
+  W=rep(1, numcols); #1's will be replaced with the weight of each column. If a weight is not found, we stop  below.
   for(i in 1:numcols){
     w = getcoloption(o, 'weight', colnames[i] );
 
     #if the weight is specified as e.g,. "1.5 each", we don't need to resolve multi-matched colnames later, so no need to keep those in ocolnames.
     if(is.character(w) && grepl('each$',w)){ w=gsub(' *each$','',w); }
     else if(!is.null(attr(w,'ocolname'))) { ocolnames[i] = attr(w,'ocolname'); }
+    if(is.null(w)){ stop(sprintf('Could not get the weight value for [%s]',colnames[i])); }
     W[i] = w;
   }
 
@@ -190,9 +191,9 @@ getcoloption_weights=function(colnames,o=list()){
 getcoloption_curves=function(colnames,o=list()){
   if(!is.null(o$curves)){
     if(!all(colnames %in% names(o$curves))){
-      cat(paste0('---WARNING: curves argument is given, but it does not contain a value for every colnames. Filling in the missing ones from other option parameters.\n'));
+      dbg_warnf('curves argument is given, but it does not contain a value for every colnames. Filling in the missing ones from other option parameters.');
       missingcolnames = setdiff(colnames, names(o$curves));
-      o$curves = list_merge(curves, getcoloption_curves(missingcolnames, list_merge(o,list(curves=NULL))));
+      o$curves = list_merge(o$curves, getcoloption_curves(missingcolnames, list_merge(o,list(curves=NULL))));
     }
     return(o$curves[colnames]);       
   }
@@ -204,3 +205,6 @@ getcoloption_curves=function(colnames,o=list()){
   }
   return(curves);
 }
+
+
+#stk__=dbg_nicestack(1); message(sprintf('getcoloption.r sourced from: %s',stk__));

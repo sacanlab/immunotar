@@ -14,7 +14,7 @@ vec_rescale_curve=function(x, curvature, xmin=NULL,xmax=NULL, ymin=NULL,ymax=NUL
   if(is.null(ymax)) ymax=xmax;
   #NOTE: (Rawan ) - only apply this to the none NA values, done 
   if(any(x2<xmin) || any(x2>xmax)){
-    warning('This function is designed to only work for a specific range and may be numerically unstable outside that range. Some of the input numbers are outside the range [xmin..xmax]. Either adjust xmin,xmax; or ensure the numbers are within the range.');
+    warning('This function is designed to only work for a specific range and may be numerically unstable outside that range. Some of the input numbers are outside the range [xmin..xmax]. Either adjust xmin,xmax; or ensure the numbers are within the range.\n');
     }
 
 #See similar formulas on: https://math.stackexchange.com/questions/65641/i-need-to-define-a-family-one-parameter-of-monotonic-curves
@@ -45,7 +45,7 @@ if(is.null(xmax)) xmax=1;
 if(is.null(ymin)) ymin=xmin;
 if(is.null(ymax)) ymax=xmax;
 if(any(x<xmin)||any(x>xmax)){
-	warning('This function is designed to only work for a specific range and may be numerically unstable outside that range. Some of the input numbers are outside the range [xmin..xmax]. Either adjust xmin,xmax; or ensure the numbers are within the range.');
+	warning('This function is designed to only work for a specific range and may be numerically unstable outside that range. Some of the input numbers are outside the range [xmin..xmax]. Either adjust xmin,xmax; or ensure the numbers are within the range.\n');
 }
 
 # scale x to range 0..1:
@@ -63,3 +63,4 @@ return(y);
 }
 
 
+#stk__=dbg_nicestack(1); message(sprintf('vec_rescale_curve.r sourced from: %s',stk__));

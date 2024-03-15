@@ -5,7 +5,7 @@
 # File names (unless they already exist in the cwd) are adjusted relative to the folder containing this yml file.
 
 #outfile: 'demo_project_result.xlsx'
-knowntargets: 'ALK,MEGF10'
+knownpositives: 'ALK,MEGF10'
 dataset:
   datafile: 'demo_experiment.xlsx'
   handlenan: 0 #replace NA's with a value. default is 'none', which leaves NA's as is. see data_handlenan() for options.
@@ -14,7 +14,7 @@ dataset:
 
 
 enrich: #parameters to be passed into data_enrich()
-  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,opentargetsurface'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
   #some enrich types require additional arguments. provide them here.
   depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search
   #goids: 'Notch binding'
@@ -31,7 +31,7 @@ rescale: 'percentile' #change default scale. (default is 'percentile')
  # gtex: 'percentile' #linearly scales min..max to 0..100
   #go: 'none'
 
-weight: -1 #Set the default weight. If you set this, remember to override this default value for columns that should have an opposite signed weight.
+weight: -1 #(NOT RECOMMENDED). Set the default weight. If you set this, you need to take care to override this default value for columns that should have an opposite signed weight.
 colweight: #specify weight for individual columns
   gtex: "-1 each" #will be divided by the number of gtex_ columns.
   evodevo_pediatric: "-1 each"

@@ -1,23 +1,23 @@
+source_disabled__=function(...){invisible(NULL)}
 #% Copyright (C) 2022 by Rawan Shraim and Ahmet Sacan 
 
 ##Applying the vec_rescale function to a data frame 
 data_rescale=function(d, o=list()){
-#  source('getcoloption.r')
-#  source('vec_rescale.r')
-#  source('util.r')
-    
+  if(!exists('opt_set')){ source_disabled__('util.r'); } 
+  if(!exists('getcoloption')){ source_disabled__('getcoloption.r'); } 
+  if(!exists('vec_rescale')){ source_disabled__('vec_rescale.r'); } 
+
   
   if(!is.list(o)){ o=list(rescale=o); }
-  o = list_merge(list(
+  o = opt_set(
     rescale='percentile' #% Default scaling type applied to all columns. Can utilbe one of none|percentile|range. Can be a csv/list of multiple scaling types if you want to generate multiple columns for each column.
     ,rescaleparam=NULL # added this parameter #parameter for rescale options such as 'curve' 
     ,coloptions=NULL #% You can specify weight/handlenan/rescale options for each column separately.
     ,colrescale=NULL #% This is another place scale option for each column can be specified. This can be a struct or a list.
     ,cols=NULL #%if non-empty, we only apply to these columns. Can bee a list of column names or a logical/numerical index for columns. or '__NUMERIC__' to only use numeric columns.
     ,dbg=F #print debugging messages
-), o);
+, o);
   
-#  source('util.r')
   Icols=data_Icols(d,o$cols);
   
   for(c in Icols){
@@ -34,14 +34,15 @@ data_rescale=function(d, o=list()){
 
 #makes use of o$curve parameter, but calls data_rescale() to do the rescaling.
 data_rescale_curve=function(d,o=list()){
-#  source('getcoloption.r')
-#  source('util.r')
+  if(!exists('opt_set')){ source_disabled__('util.r'); } 
+  if(!exists('getcoloption')){ source_disabled__('getcoloption.r'); } 
+  
   Icols=data_Icols(d,o$cols);
   
   #o=modifyList(list(curve=0), o); #by default, don't curve.
-  o=list_merge(list(
+  o=opt_set(
     curves=NULL #if given, we use it, otherwise we collect curve values using getcoloption().
-  ),o)
+  ,o)
   if(is.null(o$curves)){ curves=getcoloption_curves(colnames(d)[Icols],o); }
   else{ curves=o$curves; }
 
@@ -60,3 +61,5 @@ data_rescale_curve=function(d,o=list()){
   return(data_rescale(d, list(colrescale=colrescale, colrescaleparam=colrescaleparam)));
   
 }
+
+#stk__=dbg_nicestack(1); message(sprintf('data_rescale.r sourced from: %s',stk__));

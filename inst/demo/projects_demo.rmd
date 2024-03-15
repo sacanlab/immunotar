@@ -34,6 +34,8 @@ a=project_run(yamlfile)
 
 
 res=projects_optimweightsandcurves(p,Iweights=NULL, Icurves=NULL, method=c('SANN','Nelder-Mead','checkzeros'), trace=1)
+
+
 res
 
 cat(yaml::as.yaml(list(colweight=res$weights, colcurve=res$curves)))
@@ -88,7 +90,11 @@ tictoc::tic();
 ps = projects_runonce(ps,doparallel=T) #runonce here so the data is available, making repeated calls to projects_optimweightsandcurves() faster.
 tictoc::toc();
 
-optim_proj=projects_optimweightsandcurves(ps, method=c('SANN'), trace=1, reltol=1)
+proj_run=projects_run(ps)
+
+optim_proj=projects_optimweightsandcurves(ps, method=c('SANN'), trace=1, maxit=50, reltol=1, doparallel=T, numcores=4)
+
+
 # res
 
 
@@ -108,7 +114,7 @@ ps2 = list(
 #res=projects_optimweightsandcurves(ps,Iweights=c('opentarget_...'), Icurves=c('opentarget_...'), method=c('SANN','Nelder-Mead','checkzeros'), trace=1,reltol=0.0001)
 #res=projects_optimweightsandcurves(ps, method=c('SANN','Nelder-Mead','checkzeros'), trace=1)
 
-res=projects_optimweightsandcurves(ps2, method=c('Nelder-Mead'), trace=1, doparallel=F)
+res=projects_optimweightsandcurves(ps2, method=c('Nelder-Mead'), trace=1, doparallel=T, numcores=3)
 
 ```
 
@@ -198,15 +204,15 @@ r1=projects_optimsetup(ps2)
 
 ps=r1$ps; o=r1$o; weights=r1$weights; curves=r1$curves; Iweights=r1$Iweights; Icurves=r1$Icurves; par=r1$par;
 
-o=list_merge(list(
+o=opt_set(
     method='SANN' #optimization method. checkzeros|null|Nelder-Mead|SANN|BFGS|CG|L-BFGS-B. Can be a list of methods if you want to perform them in serial.
-    ,enforceweightsign=T # use enforcesign=T so that when a weight that doesn't match the expected sign is given, we return -Inf.
-    ,logbestfile='' #Excel file to log best results. if non-empty, we'll log the final best values.
-  ),o,list());
+    ,enforceweightsigns=T # use enforcesign=T so that when a weight that doesn't match the expected sign is given, we return -Inf.
+    ,optimlogfile='' #Excel file to log best results. if non-empty, we'll log the final best values.
+  );
 
 if(o$maximize && (is.null(o$control)||is.null(o$control$fnscale))){ o$control$fnscale=-1; }
 
-myoptim(par,projects_evalweightandcurvevector, o, ps=ps, weights=weights,Iweights=Iweights, enforceweightsign=o$enforceweightsign, curves=curves,Icurves=Icurves,stopwhenbestpossibleisfound=T)
+myoptim(par,projects_evalweightandcurvevector, o, ps=ps, weights=weights,Iweights=Iweights, enforceweightsigns=o$enforceweightsigns, curves=curves,Icurves=Icurves,stopwhenbestpossibleisfound=T)
 
 if(o$maximize && (is.null(o$control)||is.null(o$control$fnscale))){ o$control$fnscale=-1; }
 

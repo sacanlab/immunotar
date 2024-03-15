@@ -1,0 +1,61 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+source('optim.r')
+
+rosenbrockBananaFunc=function(x){ 100 * (x[2] - x[1] * x[1])^2 + (1 - x[1])^2 }
+rosenbrockBananaFunc(c(2,3))
+```
+```{r}
+source('optim.r')
+myoptim(c(-1.2,1,3), rosenbrockBananaFunc, list(method=c('Nelder-Mead','checkzeros'), trace=1) )
+```
+```{r}
+source('optim.r')
+myoptim(c(1,1,3), rosenbrockBananaFunc, list(method=c('checkzeros'), trace=1, control=list(optim=T)) )
+```
+```{r}
+source('optim.r')
+myoptim(c(-0.1,2), rosenbrockBananaFunc, list(method=c('rand+Nelder-Mead'), trace=0,enforcesign=F,reltol=0.001) )
+```
+
+```{r}
+source('optim.r')
+res=myoptim(c(-0.1,2), rosenbrockBananaFunc, list(method=c('ga'), trace=1,enforcesign=T,reltol=0.001, parallel=T))
+
+
+```
+
+```{r}
+source('optim.r')
+myoptim_getparrange(c(-1.2,1,3), rosenbrockBananaFunc )
+```
+
+```{r}
+source('myoptim2.r')
+myoptim(c(-10,2), rosenbrockBananaFunc, list(method=c('Nelder-Mead'), trace=1,enforcesign=T,reltol=0.001) )
+
+```
+
+```{r}
+source('optim.r'); source('optim_sfs.r')
+rosenbrockBananaFunc=function(x,...){ 100 * (x[2] - x[1] * x[1])^2 + (1 - x[1])^2 }
+
+myoptim(c(5,10),rosenbrockBananaFunc,list(lower=c(6,-1),method='sfs',suboptim=T,trace=1))
+```
+
+
+```{r}
+source('optim.r'); source('optim_sfs.r')
+rosenbrockBananaFunc=function(x,...){ 100 * (x[2] - x[1] * x[1])^2 + (1 - x[1])^2 }
+
+myoptim(c(5,10,15),rosenbrockBananaFunc,list(method='onebyone',suboptim=T,trace=1,doparallel=F,maximize=F,maxit=10))
+```
+

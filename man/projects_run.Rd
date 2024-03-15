@@ -3,11 +3,13 @@
 \name{projects_run}
 \alias{projects_run}
 \title{projects_run is used to generate the IMMUNOTAR score for  each protein similar to project_run however, this is when you have multiple different cancer expression datasets. These datasets would have to be specified separately in the yaml file or in the project structure within R. This function will run through each project separately and project a structure with the outputs for each project.
-To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. You can select the number of cores using the option numcores= OR the default is 2 less than the total cores on your computer.}
+To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. Use config('numcores',XXX) to set the number-of-cores; if not set, it will default to 2 less than the total cores on your computer.
+doparallel argument is passed on to list_map()}
 \usage{
-projects_run(ps, requireknowntargets = T, runonce = F, doparallel = T, ...)
+projects_run(ps, ...)
 }
 \description{
 projects_run is used to generate the IMMUNOTAR score for  each protein similar to project_run however, this is when you have multiple different cancer expression datasets. These datasets would have to be specified separately in the yaml file or in the project structure within R. This function will run through each project separately and project a structure with the outputs for each project.
-To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. You can select the number of cores using the option numcores= OR the default is 2 less than the total cores on your computer.
+To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. Use config('numcores',XXX) to set the number-of-cores; if not set, it will default to 2 less than the total cores on your computer.
+doparallel argument is passed on to list_map()
 }

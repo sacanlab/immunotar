@@ -1,0 +1,52 @@
+---
+title: "Optimize Immunotar Parameters using Pancancer Dataset"
+output: html_document
+date: "2024-01-06"
+---
+```{r }
+rm(list=ls())
+```
+
+```{r}
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r')
+```
+
+
+```{r }
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r')
+
+DEVMODE=T
+warnfif(DEVMODE,'Development-mode is ON. I will use a smaller subset of projects and/or genes to speed up code-development.');
+
+```
+
+```{r}
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r')
+
+ps=pancancer_pediatricprojects(onlysurfacegenes=F,devmode=DEVMODE)
+
+parallel_startglobalcluster(config('numcores'),length(ps));
+#Default parameters for projects_optimweightsandcurves()
+
+OOPTIM=list(method=var_pick(DEVMODE,'SANN',c('SANN','Nelder-Mead')), trace=2, methodcontrols=list('SANN'=list(maxit=1000), 'Nelder-Mead'=list(reltol=0.0001),checkzeros=list(abstol=0.0001)), doparallel=T, optimizedparamsfile=T,devmode=DEVMODE,Iweights=NULL,Icurves=list())
+
+## Optimize the weights (and not the curves) first with SANN & Nelder-Mead, then with checkzeros; and a final round of Nelder-Mead.
+#Checkzeros may take us somewhere away from a local minima and we may discover another local minima in that new neighborhood; hence we apply a final round of Nelder-Mead.
+optimres =  projects_optimweightsandcurves(ps, OOPTIM)
+#the list_selectfields(optimres,..) below is how we make the previous res as starting point for the next optim.
+optimres =  projects_optimweightsandcurves(ps, OOPTIM, list_selectfields(optimres,c('weights','curves')), method='checkzeros')
+optimres =  projects_optimweightsandcurves(ps, OOPTIM, list_selectfields(optimres,c('weights','curves')), method='Nelder-Mead')
+
+
+## REPEAT OPTIMIZATION FOR CURVES (and not WEIGHTS)
+optimres =  projects_optimweightsandcurves(ps, OOPTIM, list_selectfields(optimres,c('weights','curves')), Iweights=list(), Icurves=NULL)
+optimres =  projects_optimweightsandcurves(ps, OOPTIM, list_selectfields(optimres,c('weights','curves')), Iweights=list(), Icurves=NULL, method='checkzeros')
+optimres =  projects_optimweightsandcurves(ps, OOPTIM, list_selectfields(optimres,c('weights','curves')), Iweights=list(), Icurves=NULL, method='Nelder-Mead')
+
+msgfif(DEVMODE&&(optimres$value==1), 'Develmode is ON and **100%% accuracy** is achieved. You may want to remove the bestparams file [%s] if you want to re-optimize from defaultparams so you can see the DEVEL progress again.',project_optimizedparamsfile(OOPTIM))
+```
+```{r}
+stopf('SANDBOX CODE BELOW HERE. NOT INTENDED FOR PRODUCTION.')
+source('util.r'); source('projects.r'); source('project.r');
+
+```

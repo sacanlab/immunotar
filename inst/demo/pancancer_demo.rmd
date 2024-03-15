@@ -1,0 +1,72 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-01-06"
+---
+
+```{r }
+rm(list=ls())
+source('util.r')
+```
+```{r }
+source('pancancer.r')
+meta=pancancer_getmetadata(dbg=T);
+```
+```{r}
+source('fig.r')
+fig_frequencybarplot(meta[!is.na(meta$cancer_type) & meta$ispediatric,'cancer_type'])
+```
+```{r}
+pancancer_pediatriccancerlist()
+
+source('theratardb.r')
+theratardb_searchdisease('burkitt')
+
+theratardb_disease2genesymbols('%burkitt%')
+
+source('depmapdb.r')
+depmapdb_searchsamples('burkitt')
+
+```
+```{r}
+f=pancancer_getcancerdatafile('Osteosarcoma',onlypediatric=1,onlysurfacegenes=1)
+d=data_readfile(f,rowNames=T)
+d5(d)
+```
+
+```{r}
+source('pancancer.r')
+d=pancancer_diseasemap(asframe='theratar')
+data_writefile(d,getdatafile('pancancer_map.xlsx'),sheet='theratar')
+d
+```
+
+```{r}
+d=pancancer_diseasemap(asframe='depmap')
+data_writefile(d,getdatafile('pancancer_map.xlsx'),sheet='depmap')
+d
+```
+
+```{r}
+pancancer_shortname_map('Osteosarcoma')
+pancancer_depmap_map('Osteosarcoma')
+```
+
+```{r}
+p=pancancer_project('Osteosarcoma')
+p[c('knownpositives','enrich','depmapdisease','theratardisease')]
+```
+```{r}
+source('project.r')
+p=project_run(p)
+p$datawithscore[1:5,]
+```
+```{r}
+ps=pancancer_pediatricprojects(onlysurfacegenes=F,recache=F,devmode=T)
+```
+```{r}
+source('util.r')
+fst2xlsx('C:/Users/ahmet/AppData/Local/cache/pancancer.Acute Myeloid Leuke.9a40415f501d43182b1db271090834.fst')
+```
+```{r}
+```

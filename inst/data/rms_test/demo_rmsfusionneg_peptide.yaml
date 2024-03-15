@@ -6,7 +6,7 @@
 
 #For running of functions, the "rescale, weight, etc" run first, then coloptions runs second overriding anything previous and then colrescale runs last 
 #outfile: 'demo_project_result.xlsx'
-knowntargets: 'ALK, MEGF10,FGFR4'
+knownpositives: 'ALK, MEGF10,FGFR4'
 
 datasets:
 - datafile: 'fusionneg_rms.xlsx'

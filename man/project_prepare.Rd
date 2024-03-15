@@ -5,20 +5,20 @@
 \title{project_run is used to generate the IMMUNOTAR score for  each protein in the cancer expression dataset. The input into this function is either your yaml file which contains the path to the expression data-set and the configurations needed for running the algorithm or a project
 If project_load is run, you can use the output of project_load, if not, project_load will be run through this.
 project_run will enrich with all the datatypes selected by the user through the yaml file or the project structure.
-Options include - gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentarget,surfaceopentarget,theratarsurface
+Options include - gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentarget,opentargetsurface,theratarsurface
 After enriching the data column can be re-scaled based on user input and missing values or NA's in the dataset can be handled based on user input.
 The user can also provide weights to each enrichment column using the yaml file or the project structure
 The proteins will then be scored based on the expression and enrichment columns and the weight vector provided.
 If you would like the output of the function to be a project structure with all the information that the algorithm utilizes such as the original data, the weighted data, the scored data and the MAP score of the function, you would have to specify that by adding getfull=T.
 If getfull=F - the output of this function will a dataframe with the scores of each protein}
 \usage{
-project_prepare(proj, o = list(), ...)
+project_prepare(p, ...)
 }
 \description{
 project_run is used to generate the IMMUNOTAR score for  each protein in the cancer expression dataset. The input into this function is either your yaml file which contains the path to the expression data-set and the configurations needed for running the algorithm or a project
 If project_load is run, you can use the output of project_load, if not, project_load will be run through this.
 project_run will enrich with all the datatypes selected by the user through the yaml file or the project structure.
-Options include - gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentarget,surfaceopentarget,theratarsurface
+Options include - gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentarget,opentargetsurface,theratarsurface
 After enriching the data column can be re-scaled based on user input and missing values or NA's in the dataset can be handled based on user input.
 The user can also provide weights to each enrichment column using the yaml file or the project structure
 The proteins will then be scored based on the expression and enrichment columns and the weight vector provided.

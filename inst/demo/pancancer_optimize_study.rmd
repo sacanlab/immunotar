@@ -1,0 +1,29 @@
+---
+title: "Study/Optimize Functions & Code for faster parallel computing."
+output: html_document
+date: "2024-01-06"
+---
+```{r }
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r')
+func_dependencygraph('projects_evalweightandcurvevector')
+```
+
+```{r }
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r')
+
+deps=func_dependencies('projects_evalweightandcurvevector');
+for(di in 1:length(deps)){
+	dep=deps[[di]];
+	lines=body(dep);
+	if(any(grepl('\\bsource\\(',lines) & !grepl('if\\s*\\(!exists',lines))){
+		msgf('Function %s has a source() call.',dep); next
+	}
+}
+
+#Copy e.g., the following line where you want to make the source() calls more efficient.
+if(!exists('opt_set')){ source('util.r'); } 
+
+```
+```{r}
+
+```

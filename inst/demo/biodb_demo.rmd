@@ -11,7 +11,7 @@ rm(list = ls())
 
 ```{r}
 source('config.r')
-config('datadir')
+sys_datadir()
 config('depmapdbfile')
 ```
 
@@ -20,6 +20,8 @@ source('depmapdb.r')
 depmapdb_searchsamples(c('ALL','B-cell'),where='sex="Female"')[1:10,]
 
 depmapdb_searchsamples('T-cell')
+
+depmapdb_searchsamples('neuroblastoma',searchinfields=c("primarydisease","subtype"))
 
 enrich_depmap(c('MEGF10', 'GPC2', 'ALK'), 'Rhabdomyosarcoma')
 ```
@@ -85,6 +87,8 @@ gtexdb_getsummary(c('MEGF10','TP53'))
 
 
 source('biodb.r')
+jiangproteomedb_getsummary(c('MEGF10','TP53'))
+
 jiangproteomedb_getsummary_maxabundance()
 jiangproteomedb_getsummary_maxabundance()[1:10,]
 jiangproteomedb_getsummary_maxabundance(c('MEGF10','TP53'))
@@ -123,6 +127,10 @@ theratardb_searchdisease('melanoma')
 
 theratardb_searchdisease('Ewing')
 
+theratardb_searchdisease('Multiple Myeloma')
+
+d=theratardb_disease2genesymbols(list('Leukaemia', 'Leukemia','T-cell leukaemia'))
+
 theratardb_disease2genesymbols('Cutaneous melanoma', asframe=F)
 
 theratardb_disease2genesymbols('Cutaneous melanoma')
@@ -142,6 +150,9 @@ biodb_file('theratardb')
 theratardb_disease2genesymbols('%', moa=c('CAR-T-Cell-Therapy%','adc_antigen'),minstatusscore=1)
 
 theratardb_disease2genesymbols('%', minstatusscore=1)
+
+#d=theratardb_disease2genesymbols('Prostate cancer',minstatusscore=NULL,asframe=c('genesymbol','higheststatus_'),immunoadd=100)
+#d[order(d$higheststatus_),]
 
 ## 1. Any drug surface protein -> filter to minstatus = 1 
 

@@ -10,7 +10,7 @@ source('util.r'); installpackageifmissing('readxl')
 source("config.r")
 source("biodb.r")
 
-example=readxl::read_xlsx(paste0(config('datadir'), '/ewing_sarcoma.xlsx'))
+example=readxl::read_xlsx(paste0(sys_datadir(), '/ewing_sarcoma.xlsx'))
 
 example$...1[1:5]
 

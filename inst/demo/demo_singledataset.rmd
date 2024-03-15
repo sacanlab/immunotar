@@ -22,5 +22,5 @@ p$data
 ```
 
 ```{r}
-knitr::opts_current$get('results')
+project_rankplot(p)
 ```

@@ -15,8 +15,8 @@ source('config.r')
 d=data.frame(exp1=c(1,2,3,4,5,6,7), exp2=c(4,5,9,NA,16,12,1), exp3=c(3,7,10,9,100,12,71))
 rownames(d)=c("MEGF10", "PLK1", "EEF2", "ZNF497", "ACOX2", 'FakeGene','GP1BB')
 
-xlsfile=file.path(config('datadir'),'/demo_experiment.xlsx');
-if(file.exists(xlsfile)){ warning(sprintf('xlsfile [%s] already exists. You must remove it if you\'d like it rewritten here.',xlsfile));
+xlsfile=file.path(sys_datadir(),'/demo_experiment.xlsx');
+if(file.exists(xlsfile)){ warnf('xlsfile [%s] already exists. You must remove it if you\'d like it rewritten here.',xlsfile);
 }else{
 	source('util.r')
 	xls_write(xlsfile,d,rowNames=T,open=T);
@@ -31,10 +31,8 @@ if(file.exists(xlsfile)){ warning(sprintf('xlsfile [%s] already exists. You must
 source('util.r'); installpackageifmissing("tictoc")
 tictoc::tic();
 
-##Testing with 2 expression datasets 
 source('project.r'); source('config.r')
-yamlfile=file.path(config('datadir'),'demo_project.yml');
-p=project_run(yamlfile, getfull=T, dbg=F) #use dbg=T for debugging messages
+p=project_run('demo_project.yml', getfull=T, dbg=F) #use dbg=T for debugging messages
 p
 tictoc::toc()
 ```
@@ -47,13 +45,13 @@ tictoc::toc()
 ##Testing with only a single expression datatset 
 source('project.r'); source('config.r'); source('biodb.r')
 
-yamlfile=file.path(config('datadir'),'demo_project2.yaml');
-proj=project_load(yamlfile);
+yamlfile=file.path(sys_datadir(),'demo_project2.yaml');
+p=project_load(yamlfile);
 
 # Make any changes to the project before calling project_run().
-proj$colweight$gtex='3 total';
+p$colweight$gtex='3 total';
 
-proj_run=project_run(proj, getfull=T)
+proj_run=project_run(p, getfull=T)
 
 data=proj_run$datawithscore
 
@@ -64,14 +62,15 @@ data2=proj_run$weighteddata
 
 ## Code-based configuration: Provide project configuration as a list().
 ```{r}
-############ Doesn't work as of 07/06/2023
+############ Doesn't work as of 07/06/2023.
+# Ahmet: 20231229: works for me after updating evodevo->evodevo_pediatric and addding in getcoloption.r:suggestedoptions
 source('project.r')
-proj=list(
+p=list(
 	dataset='__ALLHUMANGENES__'
 	#dataset='../data/demo_experiment.xlsx'
-	,knowntargets=c('LCT','PIGB')
+	,knownpositives=c('LCT','PIGB')
 	,enrich=list(
-		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,surfaceopentarget'
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,opentargetsurface,theratarsurface'
 		,depmapids='Rhabdomyosarcom'
 	)
 	,colweight=list(
@@ -85,15 +84,64 @@ proj=list(
 	,getfull=T
 )
 
-proj=project_load(proj)
+p=project_load(p)
 
 #the dataset now contains all human genes, but I'll keep only some to speed up this demo. Comment out the following line to use all genes.
 source('enrich.r')
-proj$data=proj$data[1:100,]
-d=project_run(proj)
+p$data=p$data[1:100,]
+p=project_run(p)
+p
+```
+
+
+```{r}
+library(stringr)
+vec <- c("man lives to work", "man works to live")
+
+word.mat <- stri_split_boundaries(vec,
+                                   type = "word",
+                                   skip_word_none = TRUE,
+                                   simplify = TRUE)
+
+c=gsub(paste0('_',p$rescale), '', colnames(p.score))
+word.mat = str_split_fixed(c, pattern = '_',n = Inf)
 
 
 
+vec <- c("foo", "man lives to eat", "man eats to live",
+         "woman lives to work", "woman works to live",
+         "we like apples", "we like peaches",
+         "they like plums", "they love peas", "bar")
 
+
+## function to extract unique words
+unique_words <- function(x, # matrix of words
+                         n = nrow(x), # number of original strings
+                         nc=1 # number of columns (words) to use
+                         ) {
+    ## join the first nc words
+    s <- stri_trim(apply(x[, 1:nc, drop = FALSE], 1, stri_join, collapse = " "))
+    ## find non-duplicated word combinations, and store in column 1
+    nodups <- !s %in% s[stri_duplicated(s)]
+    x[nodups, 1] <- s[nodups]
+    ## remove extra words from the matrix
+    x[nodups, -1] <- ""
+    ## if some strings are not unique, do it again, increasing nc by one
+    if(any(x[, 2] != "")) {
+        x <- unique_words(x = x, n = n, nc = nc + 1)
+    ## otherwise, grab the unique sub-phrases from column 1    
+    } else {
+        x <- x[, 1]
+    }
+    x=gsub(' ', '_', x)
+    return(x)
+    ## return the result
+}    
+
+a=unique_words(word.mat)
+```
+
+```{r}
+project_rankplot(p)
 ```
 

@@ -1,0 +1,14 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+rm(list = ls())
+
+```
+
+```{r}
+
+```

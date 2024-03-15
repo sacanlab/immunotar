@@ -1,22 +1,21 @@
+source_disabled__=function(...){invisible(NULL)}
 #% Copyright (C) 2022 by Rawan Shraim and Ahmet Sacan 
 
 ##Applying the vec_handlenan function to a dataframe 
-#source('util.r')
+source_disabled__('util.r')
 
 
 data_handlenan=function(d, o=list()){
-#  source('getcoloption.r')
-#  source('vec_handlenan.r')
-#  source('util.r')
-  
+  source_disabled__('getcoloption.r')
+  source_disabled__('vec_handlenan.r')
   if(!is.list(o)){ o=list(handlenan=o); }
-  o = list_merge(list(
+  o = opt_set(
     handlenan=NULL #% Default scaling type applied to all columns. Can be one of none|percentile|rangemap0100. Can be a csv/list of multiple scaling types if you want to generate multiple columns for each column.
     ,coloptions=NULL #% You can specify weight/handlenan/scale options for each column separately.
     ,colscale=NULL #% This is another place scale option for each column can be specified. This can be a struct or a list.
     ,cols=NULL #%if non-empty, we only apply to these columns. Can bee a list of column names or a logical/numerical index for columns. or '__NUMERIC__' to only use numeric columns.
     ,dbg=F #print debugging messages
-  ), o);
+  , o);
   
   Icols=data_Icols(d,o$cols);
   
@@ -24,7 +23,6 @@ data_handlenan=function(d, o=list()){
   if(!any(Inan)){ return(d); }
   
 #TODO: (discuss) add 'knnimpute' as a handlenan option. Need to do that at the data level, not at the vec level.
-
 
   for(ci in 1:length(Icols)){
     if(!any(Inan[,ci])){ next; }
@@ -37,3 +35,6 @@ data_handlenan=function(d, o=list()){
   }
   return(d);
 }
+
+
+#stk__=dbg_nicestack(1); message(sprintf('data_handlenan.r sourced from: %s',stk__));

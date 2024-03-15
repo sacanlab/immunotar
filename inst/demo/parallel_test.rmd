@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+
+parallel_stopglobalclusterifexists()
+parallel_startcluster(numtasks=2)
+parallel_startcluster(numtasks=3)
+```
+
+```{r}
+#Registering exports before starting cluster.
+source('util.r')
+parallel_stopglobalclusterifexists();
+
+.GlobalEnv[['zoz.parallel.export']]=NULL;
+zoz.parallel.abc='abc';
+parallel_registerexports(csv('zoz.parallel.abc'));
+
+clust=parallel_startcluster(numtasks=2)
+list_map(1:2,function(...){.GlobalEnv$zoz.parallel.abc; })
+```
+```{r}
+#Registering exports after starting cluster.
+source('util.r')
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+
+.GlobalEnv[['zoz.parallel.export']]=NULL;
+zoz.parallel.def='def';
+parallel_registerexports(csv('zoz.parallel.def'));
+
+list_map_parallel(1,function(...){.GlobalEnv$zoz.parallel.def; })
+```
+```{r}
+#Mixing direct calls and parallel_registerexports()
+debugSource('util.r')
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+zoz.parallel.gih='gih';
+parallel::clusterExport(clust,'zoz.parallel.gih')
+
+
+.GlobalEnv[['zoz.parallel.export']]=NULL;
+zoz.parallel.klm='klm';
+parallel_registerexports(csv('zoz.parallel.def'));
+
+list_map_parallel(1,function(...){paste0(.GlobalEnv$zoz.parallel.gih,.GlobalEnv$zoz.parallel.klm); })
+```
+```{r}
+#exported variables persist after stop/start cluster
+debugSource('util.r')
+parallel_stopglobalclusterifexists();
+clust=parallel_startglobalcluster(numtasks=2)
+
+zoz.parallel.persistence='persistence';
+parallel_registerexports('zoz.parallel.persistence',clust)
+
+parallel_stopglobalcluster();
+clust=parallel_startglobalcluster(numtasks=3)
+
+list_map_parallel(1,function(...){paste0(.GlobalEnv$zoz.parallel.persistence); })
+```
+
+```{r}
+#Mixing direct calls and parallel_registerexports()
+debugSource('util.r')
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+zoz.parallel.gih='gih';
+parallel::clusterExport(clust,'zoz.parallel.gih')
+
+
+.GlobalEnv[['zoz.parallel.export']]=NULL;
+zoz.parallel.klm='klm';
+parallel_registerexports(csv('zoz.parallel.klm'));
+
+list_map_parallel(1,function(...){ source('util.r'); return(list_fromenvironment(.GlobalEnv)); })
+#list_map_parallel(1,function(...){paste0(.GlobalEnv$zoz.parallel.gih,.GlobalEnv$zoz.parallel.klm); })
+```
+
+```{r}
+#Is a worker aware that it is a worker?
+debugSource('util.r')
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+testing='testing...';
+parallel::clusterExport(clust,'testing')
+
+#list_map_parallel(1,function(...){ source('util.r'); return(list_fromenvironment(.GlobalEnv)); })
+list_map_parallel(1,function(x,...){ source('util.r'); return(parallel_amiworker()); })
+```
+
+```{r}
+#Test recursive parallellism (not allowed)
+debugSource('util.r')
+.GlobalEnv$zoz.parallel.allownested=F
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+print(length(clust))
+
+
+list_map_parallel(1,function(x,...){
+	source('util.r')
+	a=list_map(list(1,2),sqrt,list(doparallel=T));
+	return(var_pick(attr(a,'didparallel'),'didparallel','did-NOT-parallel')); #didparallel worked, but need to turn on attr() setting in list_map() to have it tested again. I turned attr() off there for performance.
+})
+```
+
+```{r}
+#Test recursive parallellism (allowed). #subworkers automatically decided based on available cores in parent.
+#rm(list=ls())
+source('util.r')
+.GlobalEnv$zoz.parallel.allownested=T
+for(i in 1:100){
+parallel_stopglobalclusterifexists();
+
+msgf(list_map(1:2,function(x,...){
+	source('util.r')
+	r=list();
+	r['grandchild.maxworkers']=list( list_map(1:10,function(x,...){ source('util.r'); parallel_maxworkers(); },list(doparallel=T))[[1]] );
+	r$child.maxworkers=parallel_maxworkers();
+	return(r)
+},list(doparallel=T))[[1]])
+parallel_maxworkers()
+length(parallel::getDefaultCluster())
+}
+```
+
+
+```{r}
+#Test recursive parallellism (allowed) passing on the exported data down to grandchildren.
+#rm(list=ls())
+source('util.r')
+.GlobalEnv$zoz.parallel.allownested=T
+parallel_stopglobalclusterifexists();
+clust=parallel_startcluster(numtasks=2)
+print(length(clust))
+.GlobalEnv$zoz.parallel.testing='testing...'
+parallel_registerexports(csv('zoz.parallel.testing,zoz.config,zoz.config.coded')); #It is recommended to export zoz.config and zoz.config.coded to each worker, so they do not run time-consuming config() checks.
+
+
+msgf(list_map_parallel(list(1,2),function(x,...){
+	source('util.r')
+	r=list();
+	r['grandchild']=list( list_map(list(1,2),function(x,...){ return(.GlobalEnv$zoz.parallel.testing); },list(doparallel=T))[[1]] );
+	r$child=list_removefields(list_fromenvironment(.GlobalEnv),'zoz.config');
+	return(r)
+})[[1]])
+```
+

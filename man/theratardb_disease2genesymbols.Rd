@@ -12,8 +12,11 @@ theratardb_disease2genesymbols(
   moa = NULL,
   status = NULL,
   minstatusscore = NULL,
+  maxstatusscore = NULL,
   exact = NULL,
-  where = ""
+  where = "",
+  immunomult = 1,
+  immunoadd = 0
 )
 }
 \description{

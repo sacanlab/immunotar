@@ -3,9 +3,25 @@ title: "R Notebook"
 output: html_document
 ---
 
-config() looks for a file named config.yourcomputername.yml or config.yml to load your settings.
-If you want to use a different config file, call config_file('your.config.file.yml') or set the environment variable R_CONFIG_FILE.
-If you want to use a different subconfig, call config_subconfig('yoursubconfigname') or set the environment variable R_CONFIG_SUBCONFIG.
+* config() is used to manage your computer and user specific settings, such as location of datadir.
+* Configuration is loaded from a config-file (a yaml file), but you can also use config() to set a parameter in code.
+
+* config_file() can be used to get or set the location of the configuration file.
+* Configuration file is identified using the following order (the first hit is used):
+	* A previously set value in code using: config_file('/path/to/your/config.yml')
+	* The value of R_CONFIG_FILE environment variable.
+	* One of the following filenames, each searched in the current folder and parent folders:
+		* config.[packagename].yml    #e.g., config.immunotar.yml. this is only used if config is running within an installed package.
+	  * config.[yourcomputername].yml
+  	* config.yml
+	* One of the following filenames, searched in current user's home folder:
+		* rconfig.[packagename].yml
+	  * rconfig.[yourcomputername].yml
+  	* rconfig.yml
+
+* config file is loaded as a named list. Any of the fields can be treated as a subconfig.
+* 'default' subconfig, if available is always loaded first.
+* A subconfig can be selected with config_subconfig('yoursubconfigname') or using the environment variable R_CONFIG_SUBCONFIG.
 
 
 ```{r}
@@ -13,7 +29,7 @@ config_file() #this will print the active config file.
 config_subconfig() #this will print the active subconfig
 
 # Basic usage: just call config(varname)
-config('datadir')
+config('datadir')  #this may be null. use sys_datadir() when you need it.
 config('biodbdir')
 
 # To change a setting from code, use, e.g.,

@@ -6,7 +6,7 @@
 
 #For running of functions, the "rescale, weight, etc" run first, then coloptions runs second overriding anything previous and then colrescale runs last 
 #outfile: 'demo_project_result.xlsx'
-knowntargets: 'ALK'
+knownpositives: 'ALK'
 
 dataset:
   datafile: 'edited_scrna_GOSH_rms.xlsx'

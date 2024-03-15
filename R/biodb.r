@@ -1,20 +1,19 @@
+source_disabled__=function(...){invisible(NULL)}
 #Biodb database functions
 # Copyright (C) 2022 by Ahmet Sacan
-#source('util.r');
-
-
+source_disabled__('util.r');
 
 ###############################################################
 #directory where the sqlite files are kept. defaults to {datadir}/biodb
 biodb_dir=function(){
-#  source('config.r')
-  out=config('biodbdir');
-  if(is.null(out)){ out=file.path(config('datadir'),'biodb'); }
-  return(out);
+  if(!exists('config')){ source_disabled__('config.r'); } 
+  dir=config('biodbdir');
+  if(is.null(dir)){ dir=io_name(sys_datadir(),'biodb'); }
+  return(io_mkdirif(dir));
 }
 ###############################################################
 biodb_file=function(dbname,downloadifmissing=T){
-#  source('config.r')
+  if(!exists('config')){ source_disabled__('config.r'); } 
   sqlitefile = config(paste0(dbname,'file')); #e.g., config("depmapdbfile")
   if(is.null(sqlitefile)){
     sqlitefile = file.path(config('biodbdir'),paste0(dbname,'.sqlite'));
@@ -38,7 +37,8 @@ biodb_file=function(dbname,downloadifmissing=T){
       }
       else{ stop(paste0('Database file for [',dbname,'] not available and no URL to download the database is available. You need to set [',dbname,'url] in config.yml')); }
     }
-#    source('bmes_download.r')
+    #TODO: Replace this with the new download() function.
+    source_disabled__('bmes_download.r')
     message(paste0('I will attempt to download the database [',dbname,'] --> [',sqlitefile,']. Downloading may take a while (minutes to hours, depending on file size and your connection speed)...'))
     dir.create(dirname(sqlitefile), showWarnings = FALSE)
     sqlitefile = bmes_download(url,sqlitefile);
@@ -50,7 +50,8 @@ biodb_file=function(dbname,downloadifmissing=T){
   
 ###############################################################
 biodb_connect=function(dbname,downloadifmissing=T){
-  source('util.r'); installpackageifmissing("RSQLite")
+  if(!exists('opt_set')){ source_disabled__('util.r'); } 
+  installpackageifmissing("RSQLite")
   sqlitefile=biodb_file(dbname,downloadifmissing);
   #print(sqlitefile)
   db=DBI::dbConnect(RSQLite::SQLite(),sqlitefile);
@@ -292,6 +293,7 @@ uniprotdb_allgenesymbols=function(taxonid=9606){ #taxonid=9606 is for human.
 ###############################################################
 # Just a utility function to add genesymbol selection constraint to SQL.
 # Append " AND genesymbol IN (....)" to sql and construct params accordingly.
+
 biodb_query_wheregenesymbols = function(db,sql,genesymbols,params, genesymbolfield='genesymbol'){
   if(missing(genesymbols) || !length(genesymbols)){
     #print('missing genesymbols');
@@ -300,11 +302,13 @@ biodb_query_wheregenesymbols = function(db,sql,genesymbols,params, genesymbolfie
   #when we have too many genesymbols in the query, the sql length becomes a problem and produces "Error: too many SQL variables". So, for large # of genesymbols, retrieve the data from the database and find intersection in R.
   else if(length(genesymbols)>1000){
     ret=biodb_query_wheregenesymbols(db,sql,params=params,genesymbolfield=genesymbolfield);
+    #Rawan added to take care of error as the ret colnames are genesymbol not 'id' 
+    genesymbolfield='genesymbol'
     if(length(ret)>0){
       if(!('genesymbol' %in% colnames(ret))){
-        stop('Large number of genesymbols requested from this function, which only works if you retrieve the genesymbol column in your SELECT ... query. Add genesymbol as one of the SELECTed columns.');
+        stopfif('Large number of genes being searched in this function, which only works if you retrieve back the %s column in your SELECT ... query. Add %s as one of the SELECTed columns.',genesymbolfield,genesymbolfield);
       }
-      ret=ret[ ret[,'genesymbol'] %in% genesymbols, ];
+      ret=ret[ret[,genesymbolfield] %in% genesymbols, ];
     }
   }
   else{
@@ -318,7 +322,7 @@ biodb_query_wheregenesymbols = function(db,sql,genesymbols,params, genesymbolfie
     #ret=biodb_query(db,sql,params);
     ret=biodb_query(db,sql,params);
   }
-  if(genesymbolfield!='genesymbol'){
+  if(genesymbolfield!='genesymbol' && !('genesymbol' %in% colnames(ret))){
     colnames(ret)[colnames(ret) == genesymbolfield] ='genesymbol';
   }
   return(ret);
@@ -357,17 +361,16 @@ compartmentsdb_getcellsurfacegenes=function(genesymbols){
 ###############################################################
 #Get genes and their max expressions across all tissues.
 #The database uses genesymbol as primary key; for multiple ensemblid's that map 
-#to the same genesymbol, we only kept the first one. There were only 5 such duplicates.
+#to the same genesymbol, we use max/average to combine them. There were only 5 such duplicates.
 #genesymbols input is optional. When not given, we retrieve the entire table.
 gtexdb_getsummary = function(genesymbols){
   return(biodb_query_wheregenesymbols('gtexdb','SELECT * FROM rna_tpm_summary',genesymbols));
 }
 
-
 ###############################################################
 #Get genes and their max expressions across all tissues.
 #The database uses genesymbol as primary key; for multiple ensemblid's that map 
-#to the same genesymbol, we only kept the first one. There were only 5 such duplicates.
+#to the same genesymbol, we use max/average to combine them.
 #genesymbols input is optional. When not given, we retrieve the entire table.
 gtexdb_getsummary_maxtpm = function(genesymbols){
   return(biodb_query_wheregenesymbols('gtexdb','SELECT genesymbol,maxtpm FROM rna_tpm_summary',genesymbols));
@@ -377,7 +380,7 @@ gtexdb_getsummary_maxtpm = function(genesymbols){
 #Similar to gtexdb_getsummary(), but uses EvoDevo Pediatric data.
 evodevodb_pediatric_getsummary = function(genesymbols){
   ret=biodb_query_wheregenesymbols('evodevodb','SELECT * FROM rna_rpkm_summary WHERE stage="pediatric"',genesymbols);
-  ret$stage=NULL
+  ret$stage=NULL; #this removes the stage field.
   return(ret)
 }
 
@@ -388,11 +391,19 @@ evodevodb_pediatric_getsummary_maxrpkm = function(genesymbols){
 }
 
 ###############################################################
+#Similar to gtexdb_getsummary(), but uses JiangProteome data.
+jiangproteomedb_getsummary = function(genesymbols){
+  ret=biodb_query_wheregenesymbols('jiangproteomedb','SELECT * FROM ptn_relabundance_summary',genesymbols);
+  ret$stage=NULL; #this removes the stage field.
+  return(ret)
+}
+
+###############################################################
 #Get proteins and their max relative abundance across all tissues.
 #The database uses genesymbol as primary key; for multiple ensemblid's that map 
-#to the same genesymbol, we only kept the first one.
+#to the same genesymbol, we use max/average to combine them.
 jiangproteomedb_getsummary_maxabundance = function(genesymbols){
-  return(biodb_query_wheregenesymbols('jiangproteomedb','SELECT genesymbol,maxval FROM ptn_relabundance_summary',genesymbols));
+  return(biodb_query_wheregenesymbols('jiangproteomedb','SELECT genesymbol,maxabund FROM ptn_relabundance_summary',genesymbols));
 }
 
 ###############################################################
@@ -401,29 +412,62 @@ cirfessdb_getspc = function(genesymbols){
   return(biodb_query_wheregenesymbols('cirfessdb','SELECT * FROM spc',genesymbols));
 }
 
-##################################################
+###############################################################
+uniprotdb_getecmtotallength = function(genesymbols){
+  return(biodb_query_wheregenesymbols('uniprotdb','SELECT id,ecmtotallength FROM genesymbol',genesymbols,genesymbolfield='id'));
+}
 
-opentarget_getgenes = function(genesymbols){
-#  source('opentargetdb.r')
-  opentargetdb_populateifneeded();
-  return(biodb_query_wheregenesymbols('opentarget','SELECT targetSymbol,1 AS isopentarget FROM opentarget', genesymbols, genesymbolfield = 'targetSymbol'));
+###############################################################
+#extract genesymbols from a data frame.
+# one of the columns must be "genesymbol"; otherwise we use the rownames.
+dataframe_getgenesymbols=function(d){
+  stopifnot(is.data.frame(d));
+  if('genesymbol' %in% colnames(d)){ genesymbols=d$genesymbol; }
+  else{ genesymbols=rownames(d); }
+  return(genesymbols);
 }
 
 ###################################################
-#can take a dataframe as input (one of the columns must be "genesymbol") or a list of genesymbols.
-getsurfacegenes=function(genesymbols, spc_score=0, comp_score=0){
+#can take a dataframe as input  (to filter out any dataframe genes that are not surfacegenes.)
+#Use NaN (or a very large number, e.g., infinity) for a score to disable it.
+#If you need to get the list of genes from different sources separately in a list, set getseparate=T.
+#compartments_score=2 threshold works best (based on experience)
+getsurfacegenes=function(genesymbols=NULL, spc_score=0, compartments_score=2, uniprot_ecmtotallength=NaN,getseparate=FALSE){
   if(is.data.frame(genesymbols)){
+    stopfif(getseparate, "getseparate option is only available for a genesymbol list, and not for a dataframe.");
     d=genesymbols;
-    surfgenes=getsurfacegenes(d$genesymbol);
-    ret=d[d$genesymbol %in% surfgenes, ];
-    
+    genesymbols=dataframe_getgenesymbols(d);
+    surfgenes=getsurfacegenes(genesymbols);
+    return( d[genesymbols %in% surfgenes, ,drop=F] );
   }else{
-    comp=compartmentsdb_getcellsurfacegenes(genesymbols)
-    spc=cirfessdb_getspc(genesymbols)
-    ret=unique(c(spc$genesymbol[which(spc$spc > spc_score)],comp$genesymbol[which(comp$confidence >= comp_score)]))
+    stopifnot(is.null(genesymbols)||istexts(genesymbols));
+    sgenes=NULL; cgenes=NULL; ugenes=NULL;
+    if(!is.nan(spc_score)&&!is.infinite(spc_score)){
+      spc=cirfessdb_getspc(genesymbols)
+      sgenes=spc$genesymbol[which(spc$spc > spc_score)];
+    }
+    if(!is.nan(compartments_score)&&!is.infinite(compartments_score)){
+      comp=compartmentsdb_getcellsurfacegenes(genesymbols)
+      cgenes=comp$genesymbol[which(comp$confidence >= compartments_score)]
+    }
+    if(!is.nan(compartments_score)&&!is.infinite(compartments_score)){
+      uni=uniprotdb_getecmtotallength(genesymbols)
+      ugenes=uni$genesymbol[which(uni$ecmtotallength >= uniprot_ecmtotallength)];
+    }
+    if(getseparate){
+      return(list(cirfess=sgenes,compartments=cgenes,uniprot=ugenes));
+    }
+    return( unique(c(sgenes,cgenes,ugenes)) );
   }
-  return(ret)
-  
+}
+
+
+##################################################
+
+opentarget_getgenes = function(genesymbols){
+  source_disabled__('opentargetdb.r')
+  opentargetdb_populateifneeded();
+  return(biodb_query_wheregenesymbols('opentarget','SELECT targetSymbol,1 AS isopentarget FROM opentarget', genesymbols, genesymbolfield = 'targetSymbol'));
 }
 
 
@@ -439,6 +483,3 @@ opentargetsurface_getgenes=function(genesymbols){
 }
 
 ###############################################################
-uniprotdb_getecmtotallength = function(genesymbols){
-  return(biodb_query_wheregenesymbols('uniprotdb','SELECT id,ecmtotallength FROM genesymbol',genesymbols,genesymbolfield='id'));
-}

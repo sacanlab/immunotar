@@ -1,0 +1,271 @@
+---
+title: "R Notebook"
+output: html_document
+---
+```{r}
+source('util.r')
+
+file='temp.fst';
+d=data.frame(a=c(5,5),b=c(7,9));
+rownames(d)=c('apple','orange')
+data_writefile(d,file)
+
+data_readfile(file)
+
+```
+```{r}
+source('util.r')
+o=cache_opts(fileext='fst')
+o$cachefile
+cache_save(5,o)
+cache_load(o)
+```
+
+```{r}
+source('util.r'); source('vec_rescale.r')
+x=seq(from=0,to=100,by=.01);
+fig1=ggplot2::qplot(x,vec_rescale(x,'curve',-3))
+fig2=ggplot2::qplot(x,vec_rescale(x,'curve',3))
+gridExtra::grid.arrange(fig1, fig2, ncol=2)
+
+```
+```{r}
+a=c(5,6);
+b=function(){
+	a[[2]]=a[[2]]+1;
+	msgf(a);
+	return(a[[2]]);
+}
+b()
+b()
+a
+```
+```{r}
+source('pancancer.r')
+d=pancancer_getalldata();
+```
+```{r}
+source('projects.r')
+
+projects_rankimpact(ps,numrandrows=2,devmode=T)
+```
+
+```{r}
+source('project.r')
+
+yamlfile=file.path(sys_datadir(),'demo_project2.yaml');
+p=project_load(yamlfile);
+p=project_prepare(p);
+
+q=project_fillweightsigns(p,reimportdefaultparams=F)
+assertf(q$weightsigns$expr_mean_percentile>0);
+
+q=project_fillweightsigns(p,reimportdefaultparams=T)
+assertf(q$weightsigns$expr_mean_percentile>0);
+
+p=project_run(p);
+p$weights$expr_mean_percentile=-5;
+q=project_fillweightsigns(p,reimportdefaultparams=F)
+assertf(q$weightsigns$expr_mean_percentile<0);
+
+q=project_fillweightsigns(p,reimportdefaultparams=T)
+assertf(q$weightsigns$expr_mean_percentile>0);
+
+
+p$colweight$expr_mean_percentile=-5; p$weights=NULL;
+p=project_run(p);
+assertf(p$weights$expr_mean_percentile==-5);
+
+q=project_fillweightsigns(p,reimportdefaultparams=F)
+assertf(q$weightsigns$expr_mean_percentile<0);
+
+q=project_fillweightsigns(p,reimportdefaultparams=T)
+assertf(q$weightsigns$expr_mean_percentile>0);
+
+
+
+```
+
+```{r}
+source('projects.r')
+o=projects_getweightsandcurves(ps)
+o
+```
+
+```{r}
+installpackageifmissing('functiondepends');
+
+```
+```{r}
+source('util.r')
+parallel_startcluster()
+
+catf(list_map_parallel(list(1,2),function(...){source('util.r'); return(list(cpu=sys_cpuinfo(),ram=sys_raminfo()));})[[2]])
+
+```
+```{r}
+f=function(){ stop(); }
+g=function(){ f(); }
+clust=projects_setupcluster(doexport=F)
+parallel::clusterExport(clust,c('g','f'));
+source('util.r')
+a=list_map_parallel(c(1,2),function(x){ g() })
+a[[1]]
+```
+```{r}
+source('util.r')
+func_depends(csv('projects_evalweightandcurvevector'),recache=T)
+```
+```{r}
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r'); source('optim.r')
+
+OOPTIM$methodcontrols$ga$parallel=F
+projects_optimweightsandcurves(ps,OOPTIM,method='ga',loadlogpopulation=T,doparallel=F)
+```
+```{r}
+source('project.r'); source('projects.r'); source('ewingmm.r')
+p=ewing_project(devmode=DEVMODE);
+p$runcounter__
+```
+```{r}
+ source('pancancer.r'); source('projects.r')
+ ps=pancancer_projects(devmode=DEVMODE)
+ ps[[1]]$runcounter__
+```
+```{r}
+o$labelgenesby=list(field='knownpositives',pch=20);
+
+#THE code here is useful to draw heatmaps for multiple projects. I started coding it for a single project, but then realized that is not the use case for this feature.
+
+d=as.matrix(p$data[1:5,1:5]);
+labelgenes=function(){
+	if(isempty(o$labelgenesby)){ return(); }
+	if(is.namedlist(o$labelgenesby)){ o$labelgenesby=list(o$labelgenesby); }
+	for(byi in 1:length(o$labelgenesby)){
+		by=o$labelgenesby[[byi]];
+		if(is.character(by)){ by=list(field=by); }
+		byfield=by$field
+		pch=var_pickfirstnotnull(by$pch,20);
+		bygenes=csv(p[[by]]);
+		I=which(rownames(d) %in% bygenes);
+		if(!length(I)){ next; }
+		ind=c();
+		for(c in 1:ncol(d)){
+		  stop('TODO:')	
+		}
+	}
+	
+	for(r in 1:nrow(d)){
+	
+	}
+}
+
+
+  ComplexHeatmap::pheatmap(d,fontsize=7,show_rownames=T, show_colnames = T, treeheight_row = 0,
+                           treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
+                           color = viridis::viridis(17), na_col = 'grey', border_color = 'white', 
+                           cellwidth = 25, cellheight =15
+    ,layer_fun = function(j, i, x, y, w, h, fill) {
+        # restore_matrix() is explained after this chunk of code
+        ind_mat = ComplexHeatmap::restore_matrix(j, i, x, y)
+        
+        ind = unique(c(ind_mat[2, ], ind_mat[, 3]))
+        grid::grid.points(x[ind], y[ind], pch = 1, size = unit(4, "mm"),
+        									gp=grid::gpar(col='black',alpha=1) #style reference: https://rdrr.io/r/grid/gpar.html
+        									)
+      }  												 
+                           )
+```
+```{r}
+source('theratardb.r')
+#ahmet: let's discuss this known targets vs. the ones we get from theratar.
+tttargets=theratardb_disease2genesymbols("Ewing's sarcoma",asframe=T)
+knownpositives=tttargets[tttargets$higheststatus_>0,'genesymbol']
+knownpositives
+getsurfacegenes(tttargets)
+```
+
+```{r}
+config('project_optimizedparamsfile','project_optimizedparams_noopentarget.devel.yml')
+source('project.r');
+
+x=project_getoptimlogpopulation();
+```
+```{r}
+source('sandbox.r')
+for(x in 1:3){
+tictoc::tic();
+for(i in 1:1000000){
+	f1(x)
+}
+tictoc_pretty()
+}
+```
+```{r}
+stop()
+{
+	file=paste0('temp.',ext);
+	tictoc::tic();
+	for(i in 1:100){
+		d=data_readfile(file);
+		data_writefile(d,file);
+	}
+	tictoc_pretty()
+}
+
+```
+
+
+```{r}
+source('project.r'); source('pancancer.r');source('ewingmm.r')
+DEVMODE=var_get('DEVMODE',T)
+
+p=mm_project(devmode=DEVMODE);
+
+project_resultheatmap(p,rows=p[['validated']],withexprcol = T, markgenesby=csv('knownpositives,curated,validated,opentarget'), imgfile='temp.png')
+```
+
+```{r}
+source('project.r'); source('projects.r');
+d=projects_rankimpact(ps,devmode=DEVMODE)
+
+```
+```{r}
+source('fig.r')
+fig_densityandhistogram(allscores)
+```
+
+
+```{r}
+source('project_rawan.r');
+project_shortenfeaturenames(c('a_b_c','a_d_e','b_c'))
+#a_b, a_d, b
+```
+
+```{r}
+source('util.r')
+parallel_stopglobalcluster()
+clust=parallel_startglobalcluster(numtasks=2)
+xxx=sample(1:1000,1);
+msgf(xxx)
+parallel_registerexports('xxx',clust);
+
+r=list_map_parallel(1,function(...){ #if the worker has already started their own cluster, doexports within worker so it can send the new variables to its subworkers.
+  r=list();
+  r['xxx']=list(.GlobalEnv$xxx)
+  #r['importednames']=list(names(.GlobalEnv$zoz.parallel.imported))
+  r['subxxx']=list_map_parallel(1:3,function(...){ return(.GlobalEnv$xxx); })
+  subclust=parallel::getDefaultCluster();
+  r['subclustlength2']=length(subclust)
+  return(r)
+})
+msgf(r)
+
+```
+
+
+```{r}
+
+
+```
+

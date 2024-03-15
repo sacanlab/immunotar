@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+```{r}
+source('util.r')
+d=data.frame(exp1=seq(from=10,to=60,by=10))
+d
+groups=list(myset=c(1,2,4));
+
+ps[[1]]
+
+library(fgsea)
+data(examplePathways)
+data(exampleRanks)
+
+examplePathways
+pathways=list(validatedpositives=p.es.rs$validatedpositives, knownpositives__=p.es.rs$knownpositives__, opentarget=p.es.rs$opentarget, curated=p.es.rs$curated)
+
+ranks=unlist(ps[[1]]$datawithscore)
+
+library(tibble)
+ranks %>% 
+  rownames_to_column() %>% 
+  deframe()
+
+ranks[1:10]
+
+ranks=as.matrix(ps[[1]]$datawithscore[,'score', drop=F])
+names(ranks)=rownames(ranks)
+
+ranks[1:10]
+
+
+a=fgsea::fgsea(pathways, stats=ranks, minSize=1)
+
+a$ES
+```

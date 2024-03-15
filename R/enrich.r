@@ -1,7 +1,8 @@
+source_disabled__=function(...){invisible(NULL)}
 #% Copyright (C) 2022 by Rawan Shraim, Ahmet Sacan
-#source('biodb.r')
-#source('util.r')
-#source('theratardb.r')
+source_disabled__('biodb.r')
+source_disabled__('util.r')
+source_disabled__('theratardb.r')
 
 ###############################################################
 #Merge assuming x (maindata) has genesymbol as rownames, and y (moredata) has a column named genesymbol.
@@ -21,8 +22,9 @@ enrich_merge = function(x, y, ycolprefix='', by.x=0, by.y='genesymbol', all.x=T,
   }
   if(!nrow(x)){ return(y); }
   x= merge(x,y, by.x=by.x, by.y=by.y, all.x=all.x, all.y=all.y);
- #merge() creates a new column for Row.names; move it back to rownames and delete that column.
-  rownames( x ) = x$Row.names;   x = x[, !names(x) %in% c('Row.names',by.y) ]
+  #merge() creates a new column for Row.names; move it back to rownames and delete that column.
+  rownames( x ) = x$Row.names;
+  x = x[, !names(x) %in% c('Row.names',by.y) ]
   return( x );
 }
 
@@ -34,11 +36,20 @@ enrich_gtex = function(d){
 }
 
 ###############################################################
-# Adds max RPKM value of each gene across all tissues surveyed in GTEx.
+# Adds max RPKM value of each gene across all tissues surveyed in Evo devo
 
 enrich_evodevo_pediatric = function(d){
   return( enrich_merge(d, evodevodb_pediatric_getsummary(rownames(d)), 'evodevo_pediatric_') );
 }
+
+
+###############################################################
+# Add max relative abundance of each gene across all tissues surveyed in JiangProteome db
+
+enrich_healthyprot = function(d){
+  return( enrich_merge(d, jiangproteomedb_getsummary(rownames(d)), 'healthyprot_') );
+}
+
 
 ###############################################################
 #' Compartments is a protein localization database that has a confidence score related to the protein being a surface membrane protein. 
@@ -62,14 +73,6 @@ enrich_cirfess_spc = function(d){
 }
 
 ###############################################################
-
-enrich_healthyprot = function(d){
-  moredata=jiangproteomedb_getsummary_maxabundance(rownames(d));
-  return(enrich_merge(d, moredata, 'healthyprot_'))
-}
-
-
-###############################################################
 #depmapids pull every cell line queried by depmap 
 #collate='merge': adds a single column merging all genes from each depmapid. Probabilities from multiple depmapids for each gene are merged by taking the maximum probability. If you want to use the average probability, use mergefunc=mean.
 #collate='separate': adds a separate column for each depmapid.
@@ -80,12 +83,11 @@ enrich_healthyprot = function(d){
 #' 
 #' @export
 enrich_depmap = function(d, depmapids, collate='merge', mergefunc=max, colname=NULL ){
-  if(is.null(collate)){ collate='separate'; }
+  if(is.null(collate)){ collate='merge'; }
   if(is.null(mergefunc)){ mergefunc=max; }
   if(is.character(mergefunc)){ mergefunc=str2func(mergefunc); }
 
-#  source('depmapdb.r')
-#  source('data_combineduplicaterows.r');
+  source_disabled__('depmapdb.r')
   if(collate=='merge'){
     ddep = depmapdb_getgenedependency(depmapids)[, c('genesymbol','probability')];
     
@@ -101,7 +103,12 @@ enrich_depmap = function(d, depmapids, collate='merge', mergefunc=max, colname=N
   }
   else if(collate=='separate'){
     for(depmapid in depmapids){
-      if(is.null(colname)){ thiscolname=paste0('depmap_probability_',depmapid); }
+      if(is.null(colname)){
+        #if there are multiple depmapids, need to specify the depmaid in the column name.
+        if(length(depmapids)>1){ thiscolname=paste0('depmap_probability_',depmapid); }
+        #if a single depmapid is requested, let's not make it part of the column name (so the column name remains uniform across multiple projects.)
+        else{ thiscolname=paste0('depmap_probability'); }
+      }
       else{ thiscolname=paste0(colname,depmapid); }
       ddep = depmapdb_getgenedependency(depmapid)[, c('genesymbol','probability')];
       #we still need to combine, b/c depmapid may be a text that matches multiple depmapid's in ddep. If you want a separate column for each depmapid, ensure the input depmapids is numeric (so no text-search is done to match multiple numeric depmapids).
@@ -140,7 +147,7 @@ enrich_go = function(d, goids, collate='separate', colname=NULL){
   	if(is.character(goid)){
   		goid_=godb_searchterm(goid);
 	    if(!length(goid_)){
-	    	warning(paste0('Goid [',goid,'] did not match any genes'));
+	    	warnf('Goid [%s] did not match any genes',goid);
 	    	next;
 	    }
   		goid=unlist(goid_$id);
@@ -148,7 +155,7 @@ enrich_go = function(d, goids, collate='separate', colname=NULL){
 
     gogenes = godb_goids2genesymbols(goid,asframe=F);
     if(!length(gogenes)){
-    	warning(paste0('Goid [',goid,'] did not match any genes'));
+    	warnf('Goid [%s] did not match any genes',goid);
     	next;
     }
     
@@ -196,7 +203,7 @@ enrich_opentarget = function(d){
 ###############################################################
 #Add an opentargets enrichment for only surface proteins using the biodb.r surface protein only function 
 
-enrich_surfaceopentarget = function(d){
+enrich_opentargetsurface = function(d){
   moredata=opentargetsurface_getgenes(rownames(d))
   return(enrich_merge(d, unique(moredata), 'opentargetsurface_'))
 }
@@ -207,17 +214,16 @@ enrich_surfaceopentarget = function(d){
 #' The output is an added column to the expression data-set that includes scores for each gene/protein that is found in the database. The score is associated to the phase of development of the drug. 
 #' 
 
+enrich_theratar=function(d, diseases='%', moa=NULL,  mergefunc=max, onlysurface=F,immunomult=1,immunoadd=0){
+  dthera=theratardb_disease2genesymbols(diseases, minstatusscore=1, moa = moa, asframe=c('genesymbol','higheststatus_'), immunomult=immunomult) 
+  dthera = data_combineduplicaterows( dthera, idcolumn='genesymbol', func=mergefunc )
+  if(onlysurface){ dthera_surface=getsurfacegenes(dthera); }
+
+  #TODO: Is unique() below necessary? It gets the unique rows of dthera_surface. But if we already applied a merge (data_combineduplicaterows), there should no longer be any duplicates.
+  return(enrich_merge(d, unique(dthera_surface), 'theratarsurface_'))
+}
+
 #' @export
-enrich_theratarsurface=function(d, diseases='%', moa=NULL, immunomult=1){
-  
-  gene_disease=theratardb_disease2genesymbols(diseases, minstatusscore=1, moa = moa, asframe=c('genesymbol','higheststatus_'))
-  
-  if(immunomult != 1){
-    gene_disease_CAR=theratardb_disease2genesymbols(diseases,minstatusscore=1, moa = 'CAR-T-Cell-Therapy%', asframe=c('genesymbol','higheststatus_'))
-    ###Look for intersecting genes between gene_disease and gene_disease_CAR and multiple score in gene disease by immunomult
-    gene_disease_CAR$higheststatus_=immunomult*gene_disease_CAR$higheststatus_
-    gene_disease=rbind(gene_disease_CAR, gene_disease[-which(gene_disease_CAR$genesymbol %in% gene_disease$genesymbol),])
-  }
-  gene_disease_surface=getsurfacegenes(gene_disease)
-  return(enrich_merge(d, unique(gene_disease_surface), 'theratarsurface'))
+enrich_theratarsurface=function(d, diseases='%', moa=NULL, mergefunc=max,immunomult=1,immunoadd=0){
+  return(enrich_theratar(d,diseases,moa,immunomult,onlysurface=T));
 }

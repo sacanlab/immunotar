@@ -1,3 +1,4 @@
+source_disabled__=function(...){invisible(NULL)}
 #% Copyright (C) 2022 by Ahmet Sacan
 
 ###############################################################
@@ -11,15 +12,15 @@ options(timeout=100000)
 #' 
 #' @export
 depmapdb_searchsamples = function(queries,searchinfields=c('samplecollectionsite','primarydisease','subtype','lineage','lineagesubtype','cellosaurusncitdisease'),exact=FALSE,where='',getfields=NULL){
-#  source('biodb.r')
+  source_disabled__('biodb.r')
   t=biodb_textsearch('depmapdb','sampleinfo',queries,searchinfields,exact,where,getfields=getfields);
 
   #library(plyr); library(dplyr) #we only need dplyr::select(), but we are required to load plyr, then dplyr here, otherwise loading dplyr here and plyr elsewhere causes problems.
   #t=t %>% select('depmapid','primarydisease','subtype', everything())
   #dplyr has issues/conflicts. let's use data.table instead.
-#  source('util.r')
+  source_disabled__('util.r')
   installpackageifmissing('data.table')
-  if(is.null(getfields)){  data.table::setcolorder(t,c('depmapid','primarydisease','subtype')); }
+  if(is.null(getfields)){  t=data.table::setcolorder(t,c('depmapid','primarydisease','subtype')); }
   return(t)
 }
 
@@ -39,21 +40,22 @@ depmapdb_getgenedependency = function(depmapids=c(),genesymbols=c(),o=list()){
     project='crispr' #can be one of crispr|achilles
     ), o);
   if(is.character(depmapids)){
+    depmapids=gsub("'", '', depmapids)
     t = depmapdb_searchsamples(depmapids,getfields=c('depmapid'));
     depmapids=unlist(t$depmapid);
   }
   
   wheres=c();
   if(length(depmapids)>0){
-    wheres = append(wheres, paste0('depmapid IN (',paste0(as.character(depmapids), collapse=", "), ')'));
+    wheres = c(wheres, paste0('depmapid IN (',paste0(as.character(depmapids), collapse=", "), ')'));
   }
   if(length(genesymbols)>0){
-    wheres = append(wheres, paste0('genesymbol IN (',paste0(sapply(genesymbols, function(x) toString(shQuote(x))), collapse=", "), ')'));
+    wheres = c(wheres, paste0('genesymbol IN (',paste0(sapply(genesymbols, function(x) toString(shQuote(x))), collapse=", "), ')'));
   }
   if(!length(wheres)){ wheres=c('1'); }
   
   sql = paste0('SELECT * FROM ', o$project, 'genedependency WHERE ',paste0(wheres, collapse=' AND '));
-#  source('biodb.r')
+  source_disabled__('biodb.r')
   t=biodb_query('depmapdb',sql);
   return(t);
 }

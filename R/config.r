@@ -1,6 +1,7 @@
+source_disabled__=function(...){invisible(NULL)}
 #% Copyright (C) 2022 by Ahmet Sacan
 #TODO: Rename this file as config.r. filenames aren't that important in R and don't create conflicts across different packages.
-#source('util.r');
+source_disabled__('util.r');
 
 # Configuration variables (and their defaults) that affect how the configuration works:
 # config.subconfig='' #provide a subconfig name. The 'default' subconfig is always loaded first, the parameters in this subconfig, when present, will override those loaded from the default subconfig. subconfig can be a csv of multiple subconfig names.
@@ -19,16 +20,22 @@
 ###############################################################
 #Automatically replace {datadir}, {biodbdir}, and {userdatadir} with their config values.
 config_autofill=function(s){
-  if(is.character(s)&&grepl('{',s,fixed=T)){
-    if (grepl('{datadir}',s,fixed=T)){
-      s=sub('{datadir}',config('datadir'),s,fixed=T);
+  if(!is.character(s)||length(s)!=1){ return(s); }
+  ms=stringr::str_extract_all(s,'\\{([^\\}]*dir)\\}');
+  for(tok_ in ms[[1]]){
+    tok=substr(tok_,2,nchar(tok_)-1);
+    val=config(tok);
+    if(!is.null(val)){
+      #msgf('Replacing %s with %s ...', tok_,val);
+      s=sub(tok_,val,s,fixed=T );
+      #msgf('Got: %s',s);
     }
-    if (grepl('{biodbdir}',s,fixed=T)){
-      s=sub('{biodbdir}',config('biodbdir'),s,fixed=T);
-    }
-    if (grepl('{userdatadir}',s,fixed=T)){
-      s=sub('{userdatadir}',rappdirs::user_data_dir(),s,fixed=T );
-    }
+    else if(tok=='datadir'){ s=sub('{datadir}',sys_datadir(),s,fixed=T ); }
+    else if(tok=='userdatadir'){ s=sub('{userdatadir}',sys_userdatadir(),s,fixed=T ); }
+    else if(tok=='cachedir'){ s=sub('{cachedir}',sys_cachedir(),s,fixed=T ); }
+    else if(tok=='usercachedir'){ s=sub('{usercachedir}',sys_usercachedir(),s,fixed=T ); }
+    else if(tok=='userhomedir'){ s=sub('{userhomedir}',sys_userhomedir(),s,fixed=T ); }
+    else if(tok=='tempdir'){ s=sub('{tempdir}',sys_tempdir(),s,fixed=T ); }
   }
   return(s);
 }
@@ -245,8 +252,10 @@ config_=function(varname){
 #useonlystored=T is used for internal purposes; when true, we use the stored or already loaded configuration and we do not use loadconfigfile.
 #.GlobalEnv$zoz.config.coded is used for values stored with config(varname,newvalue)
 #.GlobalEnv$zoz.config is used for values loaded from config file
+#default: What value should be returned if there was no value available?
 #' @export
-config = function(varname,newvalue,useonlystored=F){
+config=function(varname,newvalue,useonlystored=F,default=NULL){
+  #.GlobalEnv$DBG=c(.GlobalEnv$DBG,sprintfyaml('config(%s)',varname)); #debug entry to keep track of what gets requested in a parallel worker.
   if(missing(varname)){
     if(is.null(.GlobalEnv$zoz.config)){ config_loadconfigfile(); }
     return(list_merge(.GlobalEnv$zoz.config,.GlobalEnv$zoz.config.coded));
@@ -291,16 +300,18 @@ config = function(varname,newvalue,useonlystored=F){
     if(varname %in% names(defaults)){ return(defaults[[varname]]); }
   }
 
-  if(useonlystored){ return(NULL); }
-  if(!is.null(.GlobalEnv$zoz.config)){ return(NULL); } #config file was already loaded.
+  if(useonlystored){ return(default); }
+  if(!is.null(.GlobalEnv$zoz.config)){ return(default); } #config file was already loaded.
 
   #config_dbgmsg('Calling loadconfigfile()...')
   config_loadconfigfile();
   if(!is.null(.GlobalEnv$zoz.config)&&(varname %in% names(.GlobalEnv$zoz.config))){
     return(config_autofill(.GlobalEnv$zoz.config[[varname]]));
   }
-  return(NULL);
+  return(default);
 }
 
 #TODO: I renamed config() with config(). After updating all calls, delete this file.
 myconfig=function(...){ return(config(...)); }
+
+#stk__=dbg_nicestack(1); message(sprintf('config.r sourced from: %s',stk__));

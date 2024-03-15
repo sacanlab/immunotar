@@ -23,6 +23,9 @@ source('data_enrich.r')
 data_enrich(d,list(enrichtypes='evodevo_pediatric', depmapids='Rhabdomyosarcoma', goids='Notch binding', go_collate='merge'))
 
 
+data_enrich(d,list(enrichtypes='opentargetsurface'))
+
+
 
 ```
 

@@ -1,0 +1,225 @@
+---
+title: "Pancancer Results"
+output: html_document
+date: "2024-01-06"
+---
+```{r }
+rm(list=ls())
+source('util.r')
+
+```
+
+
+```{r}
+## Study the known target list for each disease.
+# Rawan, where did you create the table listing each disease and number of targets? Move this there.
+source('projects.r'); source('project.r'); source('pancancer.r')
+DEVMODE=var_get('DEVMODE',sys_issacanlap());
+
+t=c(); allscores=c(); allscores__=c()
+ps=pancancer_pediatricprojects(onlysurfacegenes=F,devmode=DEVMODE);
+
+mean(unlist(lists_extractfield(ps, 'rankeval')))
+
+for(pi in forlength(ps)){
+	p=ps[[pi]];
+	disease=p$disease;
+	ttdisease=pancancer_theratar_map(cancername=disease);
+	dthera=theratardb_disease2genesymbols(ttdisease,asframe=T,immunoadd=0);
+	r=list(disease=disease,numnegative=sum(dthera$higheststatus_<0), numpositive=sum(dthera$higheststatus_>0));
+	allscores=c(allscores, unlist(dthera$higheststatus_))
+	
+	#not all targets are actually present in the project.
+	dthera__ = dthera[dthera$genesymbol %in% rownames(p$data),,drop=F];
+	r=list_merge(r, list(numnegative__=sum(dthera__$higheststatus_<0), numpositive__=sum(dthera__$higheststatus_>0)));
+	t=plyr::rbind.fill(t, as.data.frame(r))
+	allscores__=c(allscores__, unlist(dthera__$higheststatus_))
+}
+
+knownp=data.frame()
+
+for(p in ps){
+  knownpositives.surf=getsurfacegenes(p$knownpositives__)
+  r=c(p$disease, paste0(knownpositives.surf, collapse = ","), length(knownpositives.surf))
+  knownp=rbind(knownp, r)
+}
+colnames(knownp)=c('disease','surfacetargets', "n_surfacetargets")
+
+writexl::write_xlsx(knownp, "../datasets/pancancer_dataset/knownpositivesindataset_pancancer_03.02.24.xlsx")
+
+source('fig.r')
+#Looking at the status of all targets in TTD 
+
+fig_densityandhistogram(allscores) + ggplot2::xlab('higheststatus') + ggplot2::ggtitle('all targets') |> print()
+fig_densityandhistogram(allscores__) + ggplot2::xlab('higheststatus')  + ggplot2::ggtitle('project targets') |> print()
+
+```
+```{r}
+### Summary report of Rankeval evaluation for each disease and number of known positives/negatives
+t=lists_todataframe(lists_selectfields(ps,csv('disease,rankeval,numknownpositives__,numknownnegatives__')))
+t[order(t$rankeval),]
+```
+
+
+```{r}
+###############
+#Looking at status score in TTD in relation to other features in the plot 
+
+library(ggplot2)
+library(ggrepel)
+
+#Creating the Icols for the healthy tissue database 
+
+#which columns to do the analysis for?
+cols='gtex,evodevo,healthyprot' 
+cols='cirfess,compartments,uniprot'
+#cols='gtex'
+#cols='depmap_probability'
+#cols=NULL
+#if you use any of the above, use the code below to resolve the colnames.
+d=ps[[1]]$datawithscore; #using the first project to resolve Icols names.
+cols=colnames(d)[ data_Icols(d,csv(cols)) ];
+
+cols = project_selectcolsbyweight(ps[[1]],bestingroup=T) #select the column with the highest abs weight in each datasource.
+
+cols = project_selectcolsbyweight(ps[[1]])
+
+for(col in cols){
+  d=projects_collectdatacol(ps, col);
+  d$higheststatus_=as.factor(d$higheststatus_)
+  d$CD19=0
+  d$CD19[which(rownames(d)== 'CD19')]=1
+  d=d[order(d$CD19),]
+  d$CD19=as.factor(d$CD19)
+  #Rawan: Was thinking of adding labels but it made the plot too messy 
+  #d$label=""
+  #d$label[which(d$higheststatus_ == 12 & d[,col] <= 30)]=rownames(d)[which(d$higheststatus_ == 12 & d[,col] <= 30)]
+  #print(ggplot(d, aes(x=higheststatus_, y=!!sym(col), label=label)) + geom_boxplot(aes(fill=higheststatus_)) +
+  #       geom_point(position=position_dodge(width=0.75),aes(color=CD19)) + geom_text_repel(nudge_x = 5, nudge_y=16,size=2))
+  
+ print(ggplot(d, aes(x=higheststatus_, y=!!sym(col))) + geom_boxplot(aes(fill=higheststatus_)) +
+         geom_point(position=position_dodge(width=0.75),aes(color=CD19))) + theme_classic()
+ 
+ #Control line thickness 
+ print(ggplot(d,aes(x=!!sym(col), color=higheststatus_)) + geom_density() + theme_classic())
+ 
+ #testing other ways to draw the density/box plots.
+ #print(ggplot(d, aes(x=higheststatus_, y=!!sym(col))) + geom_violin(aes(fill=higheststatus_)) + ggforce::geom_sina())
+
+}
+
+
+```
+
+
+```{r}
+##########################
+#Looking at MAP score improvement 
+
+DEVMODE=F
+
+ps.default=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile= 'project_defaultparams.yml')
+
+ps.default=projects_run(ps.default)
+
+mean(unlist(lists_extractfield(ps.default, 'rankeval')))
+
+ps.op=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile= 'project_optimizedparams_noopentarget_RS.02.24.24.updating.yml')
+
+#this is Ahmets final optimization 
+ps.as=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile= 'project_optimizedparams_withcurves.yml')
+
+
+mean(unlist(lists_extractfield(ps.op, 'rankeval')))
+mean(unlist(lists_extractfield(ps.as, 'rankeval')))
+
+mean(unlist(lists_extractfield(ps.as, 'rankeval')))/
+mean(unlist(lists_extractfield(ps.default, 'rankeval')))
+
+level_order=csv('NSCLC,AML,ML,BLL,TLL,BL,T-ALL,NBL,OS,ES,B-ALL,RMS')
+
+summary_score1=projects_summarizeresults(ps.op)
+summary_score2=projects_summarizeresults(ps.as)
+projects_heatmap_scores(ps.op, levels = level_order )
+projects_heatmap_scores(ps.as, levels = level_order )
+
+project_resultheatmap(ps.op[[1]], rows=rownames(summary_score1)[1:10], nc=1)
+project_resultheatmap(ps.as[[1]], rows=rownames(summary_score2)[1:10], nc=1)
+
+
+plot_mapscores=function(ps.optimized, ps.default){
+  map=pancancer_diseasemap()
+  plot.map=data.frame()
+  for(i in 1:length(ps.optimized)){
+    default_map=as.numeric(round(ps.default[[i]]$rankeval,4))
+    optim_map=as.numeric(round(ps.optimized[[i]]$rankeval,4))
+    perc_optim=as.numeric(round(((optim_map-default_map)/default_map)*100,0))
+    phenotype=map[[ps.optimized[[i]]$disease]]$short
+    new_r=c(phenotype, default_map, optim_map, perc_optim)
+    plot.map=rbind(plot.map, new_r)
+  }
+
+  colnames(plot.map)=c('phenotype', 'default_MAP', 'optimized_MAP', 'perc_optimized_MAP')
+  plot.map=reshape2::melt(plot.map, id.var='phenotype')
+  plot.map$value=as.numeric(plot.map$value)
+  
+  g=ggplot2::ggplot(plot.map[which(plot.map$variable != 'perc_optimized_MAP'),], 
+                  ggplot2::aes(x=factor(phenotype, level=level_order),y=value, fill=variable)) + 
+    ggplot2::geom_bar(stat = 'identity', position=ggplot2::position_dodge()) + ggplot2::theme_bw() + 
+    ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 90, size = 12, hjust=0.95,vjust=0.2)) + 
+    ggplot2::theme(text = ggplot2::element_text(size=12)) + 
+    ggplot2::scale_fill_manual(values=c('violet', 'orchid4'))+
+    ggplot2::xlab('') + ggplot2::ylab('Mean Average Precision (MAP)') + ggplot2::labs(fill='MAP scores')
+  print(g)
+  
+  return(plot.map)
+
+}
+
+plot_mapscores(ps.op, ps.default)
+mapsummary=plot_mapscores(ps.as, ps.default)
+
+mapsummary=mapsummary[mapsummary$variable != 'perc_optimized_MAP',]
+
+mapsummary2=reshape(mapsummary, idvar = "phenotype", timevar = "variable", direction = "wide")
+wilcox.test(mapsummary2$value.default_MAP, mapsummary2$value.optimized_MAP)
+
+```
+
+
+```{r }
+source('projects.r'); source('project.r'); source('pancancer.r')
+projects_getnames(ps.op)
+
+aml=ps.as[[1]]$datawithscore
+ball=ps.as[[2]]$datawithscore
+bll=ps.as[[3]]$datawithscore
+bl=ps.as[[4]]$datawithscore
+es=ps.as[[5]]$datawithscore
+ml=ps.as[[6]]$datawithscore
+nbl=ps.as[[7]]$datawithscore
+nsclc=ps.as[[8]]$datawithscore
+os=ps.as[[9]]$datawithscore
+rms=ps.as[[10]]$datawithscore
+tall=ps.as[[11]]$datawithscore
+tll=ps.as[[12]]$datawithscore
+
+ps.as[[7]]$rankeval
+ps.as[[2]]$rankeval
+
+```
+
+
+
+```{r }
+## RANK-IMPACT: Run after optimization has been finalized.
+# May move this section to pancancer_optimize.rmd when we are done there.
+DEVMODE=T
+
+projects_rankimpact_plot(ps.as, numrandrows=50, devmode=DEVMODE, doparallel=T, nc=2)
+
+impact=fst::read.fst("../data/projects_rankimpact.520b8e8fb0efa994dbdeb9c393286a15.fst")
+
+projects_rankimpact_plot(impact, numrandrows=50, devmode=DEVMODE, doparallel=T, nc=0)
+
+```

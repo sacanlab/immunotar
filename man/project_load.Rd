@@ -22,8 +22,8 @@ dorescale = T - can rescale numbers using any of the following methods:
 \item z-score
 \item tpm
 \item rangemap0100 - assign numbers in vector (v) to values from 0-100 - (v - minv)/(maxv-minv) * 100)
-The summarized data will be in proj\link{'data'}
+The summarized data will be in p\link{'data'}
 }
 
-If dosummarize = F - the data will not be summarized and you can find  the names of the datasets in proj\link{'datasets'}
+If dosummarize = F - the data will not be summarized and you can find  the names of the datasets in p\link{'datasets'}
 }

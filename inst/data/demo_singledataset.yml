@@ -9,5 +9,5 @@ dataset:
   rescale: 'log2,percentile' #see data_rescale() for options.
   #summarytypes: 'mean,numlowexpressed' #by default, we summarize a dataset. To prevent data summarization, use summarytypes='', or define dosummarize=0
 
-knowntargets: 'ALK,MEGF10'
+knownpositives: 'ALK,MEGF10'
 #outfile: 'demo_project_result.xlsx'

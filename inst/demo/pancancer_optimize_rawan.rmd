@@ -1,0 +1,162 @@
+---
+title: "Optimize Immunotar Parameters using Pancancer Dataset"
+output: html_document
+date: "2024-01-06"
+---
+```{r }
+rm(list=base::setdiff(ls(),c('DEVMODE')))
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r'); source('optim.r')
+
+# This rmd file is designed to run for a single optimizedparams and log file. Don't change it half-way this Rmd file. When you are running other analysis, you may need to config_reset() to switch b ack to the default files.
+
+config('project_optimizedparamsfile','project_optimizedparams_noopentarget_RS.02.27.24.yml');
+
+if(sys_ischopserver()){ config('downloadurl.addmd5',F); }
+sys_computername()
+
+DEVMODE=var_get('DEVMODE',var_pick(sys_computername()=='sacanlap',T,F)); #this will use your defined DEVMODE; and T if not defined. Don't change the default here. Only set DEVMODE=... in the Console.
+
+catf(list_map_parallel(list(1),function(...){source('util.r'); return(list(cpu=sys_cpuinfo(),ram=sys_raminfo()));})[[1]])
+
+optimres=list()
+
+#Default parameters for projects_optimweightsandcurves()
+#"OO" stands for "OPTIMIZATION OPTIONS"
+OO_reset=function(){
+OO=list(
+  hardzeroweights='opentargetsurface_isopentargetsurface'
+  ,freshstart=F #when true, we start with the defaultparams file instead of the optimizedparams file.
+  ,method=csv('L-BFGS-B,SANN,Nelder-Mead,ga,Nelder-Mead,checkzeros') #the methods are listed here, but we manually use one or more below and run them separately.
+  ,numrepeats=1 #For randomized methods, repeating may result in different results. How many times should we repeat?
+  ,trace=1,
+  methodcontrols=list(
+  'SANN'=list(maxit=var_pick(DEVMODE,5,1000))
+  ,'Nelder-Mead'=list(
+    reltol=0.001
+    ,enforcesign=T, lower=-3, upper=3 #enforcesign will trigger the use of boxconstraint version of Nelder-Mead.
+  ) 
+  ,checkzeros=list(
+    abstol=0.001 #what level of accuracy reduction are we willing to accept?
+   ,suboptim=T,osuboptim=list(method="Nelder-Mead",reltol=var_pick(DEVMODE,0.01,0.001),trace=1)
+  )
+  ,'ga'=list(
+    popSize=var_pick(DEVMODE,5,1000),maxit=var_pick(DEVMODE,5,100),stalerun=10,parallel=T
+    ,enforcesign=T, lower=-3, upper=3
+    ,suboptim=T,osuboptim=list(method="Nelder-Mead",poptim = 0.05,pressel=0.5,control=list(fnscale=-1,reltol=var_pick(DEVMODE,0.1,0.001),trace=0)) #it runs optim() quietly, so trace>0 would be a waste.
+    ,savepopulation=T
+   )
+  ,'L-BFGS-B'=list(reltol=0.01,lower=-3,upper=3)
+  )
+  , doparallel=T, doclusterexport=F, optimizedparamsfile=T,devmode=DEVMODE,trace=1, removeredundancy=T
+  ,Iweights=NULL,Icurves=NULL #don't change these, but use subsets to control weights vs. curve optimization.
+  ,subsets='weights' #csv of 'weights,curves,weights+curves'. Leave NULL to decide automatically (all three on fresh start, only weights+curves on non-fresh start)
+  )
+#OO$method=list_remove(OO$method,'SANN');
+return(OO);
+}
+
+OO=OO_reset();
+
+ps=pancancer_pediatricprojects(onlysurfacegenes=F,devmode=DEVMODE,doparallel=OO$doparallel, recache=T);
+
+projects_setupcluster(ps,doexport=T); #this takes time; you only need to do it once, but do it again if you make changes to any of the evaluation functions.
+```
+
+#Observations:
+* Increasing ga:popSize 100->1000 did not improve the freshstart results.
+* On a fresh start in ga, weights->curves order works better than curves->weights
+* On a fresh start in ga, suboptim did not improve results.
+* On a fresh start, SANN+Nelder performed terrible. SANN.iter=100 -> 1000 was still terrible.
+* Nelder-mead abstol is not great; it causes the optimization to never start (especially with enforcesign), b/c all the first things it tries are worse. Use reltol instead.
+
+
+```{r}
+OO=OO_reset();
+
+OO$Iweights=names(ps[[1]]$weights)[-which(names(ps[[1]]$weights) %in% c("gtex_numsamplesgt10tpm_nobrain_percentile", "evodevo_pediatric_maxrpkm_percentile", "expr_median_percentile"))] #add in the ones that I set to a defined limit
+OO$Icurves=list()
+
+OO$Iweights
+
+ps[[1]]$weights
+  
+#if(DEVMODE){ OO$methodcontrols$ga$parallel=F; OO$doparallel=F; } #Useful when debugging. Commenting this line out will revert back to T (b/c of OO_reset())
+
+## RUN DIFFERENT OPTIMIZATION STRATEGIES
+
+source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r'); source('optim.r')
+cmnt='';
+
+OO$subsets='weights';
+
+DEVMODE=F
+OO$method='Nelder-Mead'; OO$softenforceweightsigns=F; cmnt=''; projects_optimrecipe__()
+
+ps=pancancer_pediatricprojects(onlysurfacegenes=F,devmode=DEVMODE,doparallel=OO$doparallel, recache=T);
+
+OO$method='checkzeros'; cmnt=''; optimres=projects_optimrecipe__();
+  
+
+#OO$method='L-BFGS-B'; OO$softenforceweightsigns=F; cmnt=''; projects_optimrecipe__()
+
+
+## Fix the logfile optimscore values for enforcesign. Also updates the opentarget weight to zero and does any weight-scaling. You need to manually quench the curves if they are larger than you want.
+#y=project_updateoptimizedparams(res=NULL,OO); stopfif(!is.null(y$optimscore),'Remove optimscore from the yaml file before running this. The bestparam file may have been updated in the previous step with no-enforcesign, so its optimscore is not accurate for the next step where we use enforcesign.')
+#OO$method='none'; OO$optimizelogfile=T; OO$removeredundancy=F; cmnt=',recalculate-scores'; projects_optimrecipe__();
+
+
+#stop('end of what we want to run for now.');
+#OO$method='Nelder-Mead'; cmnt=''; projects_optimrecipe__()
+
+
+###  Optimize the logfile entries with enforcesign: SANN
+#OO$methodcontrols$SANN$maxit=var_pick(DEVMODE,5,50); OO$method='SANN'; OO$optimizelogfile=T; cmnt='';  projects_optimrecipe__()
+#warnf('REMINDER: I recommend that you manually remove the low-performing entries after this SANN optimization.');
+
+###  Optimize the logfile entries with enforcesign: Nelder-Mead
+#OO$methodcontrols[['Nelder-Mead']]$reltol=0.001;  OO$method='Nelder-Mead'; OO$optimizelogfile=T; cmnt=''; projects_optimrecipe__()
+#warnf('I recommend that you manually remove the low-performing entries after this optimization.');
+
+
+### Genetic Algorithm with suboptim. Using logfile in the population.
+# OO$removeredundancy=F; OO$methodcontrols$ga=modifyList(OO$methodcontrols$ga, list(optim=F, popSize=var_pick(DEVMODE,5,90), stalerun=20, loadlogpopulation=T)); OO$method='ga,Nelder-Mead'; OO$numrepeats=var_pick(DEVMODE,1,5);   cmnt=''; projects_optimrecipe__();
+
+
+### Genetic Algorithm again, this time with subobtim
+#OO$methodcontrols$ga=modifyList(OO$methodcontrols$ga, list(optim=T, popSize=var_pick(DEVMODE,5,180), stalerun=20, loadlogpopulation=T)); OO$method='ga,Nelder-Mead';  OO$numrepeats=var_pick(DEVMODE,1,5);   cmnt=''; projects_optimrecipe__()
+
+#OO$method='checkzeros'; cmnt=''; statsfile=getdatafile(paste0('checkzeros_stats_noopentarget',var_pick(DEVMODE,'.devel',''),'.xlsx')); stopfif(io_isfileandnotempty(statsfile),'You must manually remove (or rename for backup) the stats file [ %s ] before running this code.',statsfile); optimres=projects_optimrecipe__(); data_writefile(optimres$stats,statsfile)
+  
+
+#Miscelleneous
+#OO$methodcontrols$SANN$maxit=var_pick(DEVMODE,5,100); OO$method='SANN,Nelder-Mead'; OO$numrepeats=var_pick(DEVMODE,1,3);   cmnt=',notfresh,noopentarget';
+#OO$methodcontrols[['Nelder-Mead']]=list(reltol=0.001); OO$method='Nelder-Mead'; OO$numrepeats=var_pick(DEVMODE,1,1);   cmnt=',notfresh,noopentarget';
+#OO$method='none';  OO$numrepeats=var_pick(DEVMODE,1,1);   cmnt=',notfresh,noopentarget'; projects_optimrecipe__()
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+stopf('SANDBOX CODE BELOW HERE. NOT INTENDED FOR PRODUCTION.')
+```
+
+
+```{r}
+source('util.r'); source('projects.r'); source('project.r');
+
+```
+
