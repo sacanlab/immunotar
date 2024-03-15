@@ -20,6 +20,9 @@ devel:
   #If you want to keep a separate GitHub repository in your own account, you can fork/copy it.
   git.remoteurl: 'https://github.com/sacanlab/immunotar.git'
   git.autopull: 1 #whether to pull when a push attempt tells us there are commits in the remoteurl.
+  git.username: 'Sacanlab Devel' #overwrite this with your own Fullname in your subconfig section.
+  git.email: '<>'  #you can leave this as is. I use this blank b/c I don't want to expose email addresses in the repository commit history.
+  git.tokenfile: '{userhomedir}/github.token.immunotar.txt'
   datadir:    '{immunotardeveldir}/data'
   #datasetdir variable is not part of immunotar libray, but is used by developers for certain case studies.
   datasetdir: '{immunotardeveldir}/datasets'
@@ -34,6 +37,8 @@ rawan:
   biodbdir:   '{immunotardeveldir}/../biodb'
   #packager.topdir: '..' #packager.topdir defaults to userhomedir/r.packager. Set here if you want it different.
   parallel_maxworkers: 5
+  git.username: 'Rawan Shraim'
+
 
 
 rawanlaptop:
