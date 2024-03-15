@@ -15,7 +15,10 @@ default:
 devel:
   # immunotardeveldir is not a variable used/needed in the immunotar package. It is used by developers to set up their specific folders.
   immunotardeveldir: '..'
-  git.remoteurl: 'https://github.com/shraimrawan/IMMUNOTAR.git'
+  #git.remoteurl: 'https://github.com/shraimrawan/IMMUNOTAR.git'
+  #Please use the following remoteurl; you should already have permission to modify that github repository.
+  #If you want to keep a separate GitHub repository in your own account, you can fork/copy it.
+  git.remoteurl: 'https://github.com/sacanlab/immunotar.git'
   git.autopull: 1 #whether to pull when a push attempt tells us there are commits in the remoteurl.
   datadir:    '{immunotardeveldir}/data'
   #datasetdir variable is not part of immunotar libray, but is used by developers for certain case studies.

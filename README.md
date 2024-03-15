@@ -1,10 +1,12 @@
-# immunotar
+# Immunotar
+
+(Note: Do not change this file on GitHub.com; instead modify src.r/immunotar.README.md file and use immunotar_makepackage to push your changes)
 
 ## Introduction
 
 General introduction. Motivation, goals, features.
 
-Iclude an image.
+Include image(s) -- workflow? example results?
 
 
 ## Installation
