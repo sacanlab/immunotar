@@ -201,11 +201,11 @@ project_load=function(yamlfile,loaddatasets=T,dosummarize=T, dorescale=T){
   if(!var_tobool(p$didimportfiles)){
     #array_shift optimizedparams and then defaultparams, so they appear in the order defaults,optimized.
     if(is.null(p$importoptimizedparams)){
-      msgf("importoptimizedparams is ON by default. Set the project configuration entry importoptimizedparams=FALSE if you do not want to import them.")
+      catf("importoptimizedparams is ON by default. Set the project configuration entry importoptimizedparams=FALSE if you do not want to import them.")
       p=list_merge(list(importoptimizedparams=T),p);
     }
     if(is.null(p$importdefaultparams)){
-      msgf("importdefaultparams is ON by default. Set the project configuration entry importdefaultparams=FALSE if you do not want to import them.")
+      catf("importdefaultparams is ON by default. Set the project configuration entry importdefaultparams=FALSE if you do not want to import them.")
       #do the import at the beginning, so the project parameters are loaded on top of it.
       p=list_merge(list(importdefaultparams=T),p);
     }
