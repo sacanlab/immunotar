@@ -683,6 +683,7 @@ io_resolvepath=function(path,basedir=NULL){
 }
 ##############################################################
 # get a file path. if filename is not a full path and it does not already exist, return a path in config('datadir').
+#' @export
 getdatafile=function(filename){
   return(io_which(filename,'{datadir}'));
 }
