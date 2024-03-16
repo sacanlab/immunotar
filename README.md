@@ -70,7 +70,7 @@ head(p$datawithscore[,'score',drop=F])
 
 
 ### Prioritize genes with input experimental data
-This example uses one of the demo experimental data files included in immunotar, (demo_experiment.xlsx)[inst/data/demo_experiment.xlsx]. You may provide your own data file.
+This example uses one of the demo experimental data files included in immunotar, [demo_experiment.xlsx](inst/data/demo_experiment.xlsx). You may provide your own data file.
 
 ```r
 proj = list( dataset = 'demo_experiment.xlsx' )
@@ -82,7 +82,7 @@ head(p$datawithscore[,'score',drop=F])
 
 
 ### Use a YAML file for project configuration
-An immunotar analysis project can have many configurable options. It is convenient to store the project configuration in a YAML file. The example below uses (demo_project.yml)[inst/data/demo_project.yml] that is included in the immunotar package. See that file for an explanation of the configurable options.
+An immunotar analysis project can have many configurable options. It is convenient to store the project configuration in a YAML file. The example below uses [demo_project.yml](inst/data/demo_project.yml) that is included in the immunotar package. See that file for an explanation of the configurable options.
 
 ```r
 proj = immunotar::project_run( 'demo_project.yml' )
