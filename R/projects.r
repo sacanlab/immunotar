@@ -567,6 +567,7 @@ projects_getnames=function(ps){
 #summarize the gene scores across multiple projects.
 #names: project names. will default to list of p$name if available. otherwise 'projectN'
 #by Rawan
+#' @export
 projects_summarizeresults=function(ps,pnames=NULL){
 	map=pancancer_diseasemap()
 	for(i in 1:length(ps)){
@@ -808,6 +809,7 @@ projects_getnames=function(ps){
 #names: project names. will default to list of p$name if available. otherwise 'projectN'
 #by Rawan
 
+#' @export
 projects_summarizeresults=function(ps,pnames=NULL){
   map=pancancer_diseasemap()
   for(i in 1:length(ps)){
@@ -835,6 +837,7 @@ projects_summarizeresults=function(ps,pnames=NULL){
 #Create a summarized heatmap across projects 
 #by Rawan
 
+#' @export
 projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='IMMUNOTAR\nScore '){
   s=projects_summarizeresults(ps)
   
@@ -891,6 +894,7 @@ projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='IMMUNOT
 #options are passed into projects_rankimpact()
 #Primary caller: pancancer_optimize.rmd and/or pancancer_analyze.rmd
 
+#' @export
 projects_rankimpact_plot=function(d,...){
   if(!is.data.frame(d)){
     d=projects_rankimpact(d,...);
