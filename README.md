@@ -22,10 +22,7 @@ The public databases queried within IMMUNOTAR are divided into four categories: 
 
 The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria.
 
-![[Pasted image 20240321120456.png]]
- ![[Pasted image 20240321120556.png]] 
-      
-![[Pasted image 20240321120527.png]]
+
 Include image(s) -- workflow? example results?
 
 
@@ -38,8 +35,9 @@ If you are new to the R programming language, install [R and Rstudio](https://po
 install.packages('devtools');
 
 # Install immunotar
-devtools:install_github('sacanlab/immunotar')
+devtools::install_github('sacanlab/immunotar')
 ```
+
 
 
 ## Example Usage
