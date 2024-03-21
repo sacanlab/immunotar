@@ -20,8 +20,12 @@ The public databases queried within IMMUNOTAR are divided into four categories: 
 4. Reagent/therapeutic availability - Therapeutic Target Database (TTD) (https://db.idrblab.net/ttd/), The Database of Antibody-drug Conjugates (ADC-db) (http://adcdb.idrblab.net/)
 
 
-The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria. 	
+The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria.
 
+![[Pasted image 20240321120456.png]]
+ ![[Pasted image 20240321120556.png]] 
+      
+![[Pasted image 20240321120527.png]]
 Include image(s) -- workflow? example results?
 
 
