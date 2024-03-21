@@ -4,19 +4,20 @@
 
 ## Introduction
 
+General introduction. Motivation, goals, features.
+
 To address the challenge of identifying and systematically prioritizing immunotherapeutic targets computationally, we developed IMMUNOTAR. This tool integrates multiple publicly available databases, analyzes cancer expression datasets, and quantitively prioritizes potential targets based on predefined ideal immunotherapeutic target criteria. In addition to adult derived databases, IMMUNOTAR is equipped with pediatric specific databases aiming to aid in identifying pediatric-specific antigens, providing a resource for developing novel therapies in pediatric oncology. 
 
 
 The public databases queried within IMMUNOTAR are divided into four categories: normal tissue expression, protein localization, biological annotation, and reagent/therapeutic availability. 
-	1. Normal tissue experession - GTEx (https://gtexportal.org/home/), Evo-Devo (https://apps.kaessmannlab.org/evodevoapp/), Healthy proteomics map (PMID: 32916130)
 
-	2. Protein localization - COMPARTMENTS (https://compartments.jensenlab.org/Search), CIRFESS (https://www.cellsurfer.net/cirfess), UNIPROT (https://www.uniprot.org/)
+1. Normal tissue experession - GTEx (https://gtexportal.org/home/), Evo-Devo (https://apps.kaessmannlab.org/evodevoapp/), Healthy proteomics map (PMID: 32916130)
 
-	3. Biological annotation - Gene ontology (GO) (https://geneontology.org/), DepMap (https://depmap.org/portal/)
+2. Protein localization - COMPARTMENTS (https://compartments.jensenlab.org/Search), CIRFESS (https://www.cellsurfer.net/cirfess), UNIPROT (https://www.uniprot.org/)
 
-	4. Reagent/therapeutic availability - Therapeutic Target Database (TTD) (https://db.idrblab.net/ttd/), The Database of Antibody-drug Conjugates (ADC-db) (http://adcdb.idrblab.net/)
+3. Biological annotation - Gene ontology (GO) (https://geneontology.org/), DepMap (https://depmap.org/portal/)
 
-	General introduction. Motivation, goals, features.
+4. Reagent/therapeutic availability - Therapeutic Target Database (TTD) (https://db.idrblab.net/ttd/), The Database of Antibody-drug Conjugates (ADC-db) (http://adcdb.idrblab.net/)
 
 
 The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria. 	
