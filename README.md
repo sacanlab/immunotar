@@ -63,7 +63,7 @@ proj = list(
 proj = immunotar::project_run(proj)
 
 # Print the top ranking genes:
-head(p$datawithscore[,'score',drop=F])
+head(proj$datawithscore[,'score',drop=F])
 ```
 
 
@@ -83,7 +83,7 @@ proj = list(
 proj = immunotar::project_run(proj)
 
 # Print the top ranking genes:
-head(p$datawithscore[,'score',drop=F])
+head(proj$datawithscore[,'score',drop=F])
 ```
 
 
@@ -95,7 +95,7 @@ proj = list( dataset = 'demo_experiment.xlsx' )
 
 proj = immunotar::project_run( proj )
 
-head(p$datawithscore[,'score',drop=F])
+head(proj$datawithscore[,'score',drop=F])
 ```
 
 
@@ -105,5 +105,5 @@ An immunotar analysis project can have many configurable options. It is convenie
 ```r
 proj = immunotar::project_run( 'demo_project.yml' )
 
-head(p$datawithscore[,'score',drop=F])
+head(proj$datawithscore[,'score',drop=F])
 ```
