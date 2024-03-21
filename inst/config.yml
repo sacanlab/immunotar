@@ -31,27 +31,6 @@ devel:
   #depmapdburl: 'https://sacan.biomed.drexel.edu/lic/downloadfile?file=depmapdb.sqlite'
   biodbdir:   '{immunotardeveldir}/../biodb'
 
-rawan:
-  #multiple levels of importsubconfig not working?? needs to be tested.
-  config.importsubconfig: devel
-  biodbdir:   '{immunotardeveldir}/../biodb'
-  #packager.topdir: '..' #packager.topdir defaults to userhomedir/r.packager. Set here if you want it different.
-  parallel_maxworkers: 5
-  git.username: 'Rawan Shraim'
-
-
-
-rawanlaptop:
-  immunotardeveldir: '/Users/shraimr/Library/CloudStorage/Box-Box/RMS PhD Project/RMS_DIA/Code'
-  #config.importsubconfig: rawan
-  config.importsubconfig: devel
-
-
-c02dk0sqml7j:
-  #config.importsubconfig: rawan
-  immunotardeveldir: '/Users/shraimr/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code'
-  config.importsubconfig: devel
-  
 
 # You can change the defaults above, or set your computer-specific parameters by using a config group with your computername.
 # You can also use a computer-specific file, e.g., config.yourcomputername.yml for settings that you want to use on a specific computer.
