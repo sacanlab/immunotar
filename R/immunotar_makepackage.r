@@ -15,7 +15,7 @@ immunotar_makepackage=function(...,dryrun=F,echo=T){
   		,list(src=io_name(thisdir()),dest='inst/', include=c('config.yml') )
   		)
   ,...);
-  packager_makepackage(o,dryrun=dryrun,echo=echo);
+  return(packager_makepackage(o,dryrun=dryrun,echo=echo));
 }
 
 
