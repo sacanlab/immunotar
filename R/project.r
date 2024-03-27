@@ -824,7 +824,7 @@ project_selectcolsbyweight=function(p,minabsweight=0,bestingroup=F){
 #create plot data structure for use with ggplot.
 #if you feel the need to customize the plot, do so by adding options to the o list below.
 #' @export
-project_rankplot=function(p,...){
+project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ...){
   if(!exists('opt_set')){ source_disabled__('util.r'); }
   o=opt_set(
     nudge_x=2 #x/y offset for label of known targets.
