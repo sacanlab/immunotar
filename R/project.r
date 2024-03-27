@@ -990,7 +990,7 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
     d[,name]=vec_rescale(d[,name], type = 'rangemap0100')
   }
   d=d[rows, cols]
-  colnames(d)=project_shortenfeaturenames(colnames(d), p$rescale, ...)
+  colnames(d)=project_shortenfeaturenames(cols = colnames(d),...)
   installpackageifmissing_bioc('ComplexHeatmap')
   #installpackageifmissing('viridis')
   col = RColorBrewer::brewer.pal(name = "GnBu", n = 5)
