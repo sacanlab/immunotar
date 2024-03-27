@@ -1,0 +1,57 @@
+# Configuration may contain a single 'dataset' entry, or a 'datasets' containing a list of them.
+# A dataset can contain these attributes (and any option that data_summarize() function accepts):
+# datafile, summarytype.
+# The datafile may contain {datadir} are {userdatadir}, which are replaced with myconfig('datadir'), etc.
+# File names (unless they already exist in the cwd) are adjusted relative to the folder containing this yml file.
+
+#For running of functions, the "rescale, weight, etc" run first, then coloptions runs second overriding anything previous and then colrescale runs last 
+#outfile: 'demo_project_result.xlsx'
+knownpositives: 'ALK, MEGF10'
+
+dataset:
+  datafile: 'rms_fusionpos_edited.xlsx'
+  handlenan: 'min' #replace NA's with a value. default is 'none', which leaves NA's as is. see data_handlenan() for options.
+  rescale: 'log2,percentile' #see data_rescale() for options.
+  #summarytypes: '' #by default, we summarize a dataset. To prevent data summarization, use summarytypes='', or define dosummarize=0
+
+enrich: #parameters to be passed into data_enrich()
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot,opentarget'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  #enrichtypes: 'gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc,go,uniprot'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  #some enrich types require additional arguments. provide them here.
+  depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search
+  goids: 'Muscle Development'
+  go_collate: 'merge' #separate|merge determines whether we create separate columns for each goid.
+
+handlenan:  0 #change default handlenan. (default is 'none')
+colhandlenan: #specify handlenan for individual columns
+  #evodevo_pediatric: 'min'
+  healthyprot: 'min'
+  expr: 'min'
+
+rescale: 'percentile' #change default scale. (default is 'percentile')
+colscale: #specify scale for individual columns
+  go: 'none'
+
+weight: 0 #change default weight. (default is +1).
+colweight: #specify weight for individual columns
+  gtex_: 0
+  gtex_numtissuesgt10tpm: -0.5
+  gtex_numtissuesgt10tpm_nobrain: -2.4
+  evodevo_pediatric_: 0
+  evodevo_pediatric_maxrpkm: -1.1
+  healthyprot: -1
+  depmap: 2.6
+  compartments_sp: 4
+  cirfess_spc: 2
+  go: 0.25
+  expr_: 0 
+  expr_numlowexpressed: 0.5
+  expr_numhighexpressed: 1
+  expr_mean_: 1.5
+  uniprot: 1.5
+  opentarget: 1
+
+#coloptions: #Options may also be organized for each column. These will only be effective if the same option is not specified in one of the colXXX option groups (e.g., colscale, colweight, etc.)
+ # gtex:
+  #  scale: 'percentile' #if both colscale.gtex and coloptions.gtex.scale are provided, colscale.gtex is used and coloptions.gtex.scale is ignored.
+   # weight: 0.5
