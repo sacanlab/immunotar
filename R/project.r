@@ -915,9 +915,9 @@ strmat_unique=function(x, n = nrow(x),nc=1,...) {
 ##############################################################################
 #New implementation by Rawan 
 #Shorten the names of features 
-project_shortenfeaturenames=function(cols,removescaling=T, ...){
+project_shortenfeaturenames=function(cols,removescaling=T,...){
   if(removescaling){
-    if(!exists('vec_rescaletypes')){ source_disabled__('vec_rescale.r'); }
+    if(!exists('vec_rescaletypes')){ source_disabled__('vec_rescale.r');}
     cols=gsub(paste0('_(',paste0(vec_rescaletypes(),collapse='|'),')$') , '', cols)
   }
   #warnfif(!is.null(rescaletype),"rescaletype is obsolete. use removescaling=T/F.");
