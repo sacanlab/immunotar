@@ -874,8 +874,9 @@ project_rankplot=function(p,...){
   
   if(is.null(o$nudge_y)){ o$nudge_y=diff(range(dplot$score,na.rm=T))/20; }
   if(!isempty(I)){
-    g=g+geom_label_repel(aes(label=label, fill=isvalidtarget), max.overlaps = 1500, nudge_x
-                         =o$nudge_x,nudge_y=o$nudgey) + scale_fill_manual(values=c('white', 'cadetblue2','tomato1'))
+    g=g+geom_label_repel(aes(label=label, fill=dplot$isvalidtarget), max.overlaps = 1500, nudge_x
+                         =o$nudge_x,nudge_y=o$nudgey) + scale_fill_manual(values=c('white', 'cadetblue2',
+                         'tomato1')) + ylab('IMMUNOTAR Score')
   }
   
   return(g)
@@ -914,13 +915,13 @@ strmat_unique=function(x, n = nrow(x),nc=1,...) {
 ##############################################################################
 #New implementation by Rawan 
 #Shorten the names of features 
-project_shortenfeaturenames=function(cols,rescaletype=NULL, removescaling=T, ...){
+project_shortenfeaturenames=function(cols,removescaling=T, ...){
   if(removescaling){
     if(!exists('vec_rescaletypes')){ source_disabled__('vec_rescale.r'); }
     cols=gsub(paste0('_(',paste0(vec_rescaletypes(),collapse='|'),')$') , '', cols)
   }
-  warnfif(!is.null(rescaletype),"rescaletype is obsolete. use removescaling=T/F.");
-  cols=gsub(paste0('_',rescaletype,'$'), '', cols);
+  #warnfif(!is.null(rescaletype),"rescaletype is obsolete. use removescaling=T/F.");
+  #cols=gsub(paste0('_',rescaletype,'$'), '', cols);
   
   installpackageifmissing('stringr')
   word.mat = stringr::str_split_fixed(cols, pattern = '_',n = Inf)

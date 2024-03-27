@@ -10,14 +10,16 @@ License: Free for non-commercial use. Contact authors for redistribution and/or 
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
-Imports: foreach, doParallel, yaml, plyr, RSQLite, tidyverse, DBI, rappdirs, openxlsx,
-  data.table, tools, BiocManager, devtools, fs, here, parallel, pkgload, readxl, stringr,
-  this.path, writexl, fgsea, dplyr, ggplot2, scales, GA, lme4, optimx, tictoc, base,
-  circlize, ComplexHeatmap, ggrepel, grid, RColorBrewer, stringi, reshape, ggVennDiagram,
-  shiny, shinyjs, benchmarkme, digest, fst, functiondepends, hashmap, httr2, magrittr,
-  memuse, pryr, tibble
 Comment1: Only modify the copy present in the src.r/ folder. It will be automatically
   copied and override the copy in the R package folder.
 Comment2: You do not need to list the Imports above manually. running packager_makepackage()
   will automatically add the required packages to the list.
-Remotes: ctlab/fgsea, nathan-russell/hashmap
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Imports: DBI, RSQLite, stringr, yaml, plyr, tidyverse, data.table, fgsea, readxl,
+  writexl, dplyr, ggplot2, scales, base, GA, lme4, optimx, tictoc, openxlsx, circlize,
+  ComplexHeatmap, ggrepel, grid, RColorBrewer, stringi, tools, fs, reshape, ggVennDiagram,
+  shiny, shinyjs, benchmarkme, BiocManager, devtools, digest, doParallel, foreach,
+  fst, functiondepends, hashmap, here, httr2, magrittr, memuse, parallel, pkgload,
+  pryr, rappdirs, this.path, tibble
+Remotes: nathan-russell/hashmap
