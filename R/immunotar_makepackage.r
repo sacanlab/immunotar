@@ -1,7 +1,8 @@
+source_disabled__=function(...){invisible(NULL)}
 #!/usr/bin/env Rscript
 #% Copyright (C) 2023 by Ahmet Sacan
-source('util.r');
-source('packager.r');
+source_disabled__('util.r');
+source_disabled__('packager.r');
 
 #TODO: Remove src.r/mysetwd.r or find an alternative solution.
 # See available options in packager.r::makepackage()
