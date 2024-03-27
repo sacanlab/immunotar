@@ -1,0 +1,63 @@
+---
+title: "immunotar"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{immunotar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(immunotar)
+
+#IMMUNOTAR is equiped with multiple datasets that include various diseases 
+
+##Can use the depmap function to search what cell-lines associated to phenotype is found in depmap 
+immunotar::depmapdb_searchsamples('rhabdomyosarcoma')
+
+##Search through theratar database on diseases that are included 
+immunotar::theratardb_searchdisease()
+```
+
+
+```{r setup}
+#IMMUNOTAR can be run on either a list created by the user or a .yaml file with all datasheet included
+##This project will list all genes in the human surface genes and enriches with the databases listed under enrich 
+proj = list(
+	dataset='__ALLHUMANSURFACEGENES__'  # The starting point is all human surface genes
+	,enrich=list(
+		# Specify the databases that the dataset should be enriched with:
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
+		# Some enrichment databases require additional inputs; e.g., Depmap database requires a disease name:
+		,depmapids='Rhabdomyosarcoma')
+);
+
+##Perform dataset enrichment and prioritization analysis:
+proj = immunotar::project_run(proj)
+
+###Looking at the resulting data with score 
+head(proj$datawithscore)
+a=proj$datawithscore
+##To view the top 10 ranked genes in the dataset and a heatmap looking at the values of the highest weighted features 
+immunotar::project_resultheatmap(proj)
+
+##To view validated targets in the dataset and identify where the targets are ranked 
+
+###Add in the validated postives and negatives into the project to mark in the rank plot 
+proj$validatedpositives=c('CCR5', 'CTLA4')
+proj$validatednegatives=c('BOK')
+immunotar::project_rankplot(proj)
+
+```
+
+
+```{r setup}
+
+```
