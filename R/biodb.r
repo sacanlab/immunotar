@@ -226,6 +226,7 @@ biodb_textsearch = function(dbname,tablename,queries,searchinfields=c(),exact=FA
 ###############################################################
 # searchinfields: If missing or empty, will default to all fields of the table.
 # exact: match entire value in table or do a substring search.
+#' @export
 godb_searchterm = function(queries,searchinfields=c('name','description'),exact=FALSE,where='',obsolete=FALSE){
   if(!obsolete){
     if(where==''){ where='name NOT LIKE "obsolete %"'; }
@@ -236,6 +237,7 @@ godb_searchterm = function(queries,searchinfields=c('name','description'),exact=
 
 ###############################################################
 #Get gene symbols for a list of goids. Returns a data frame or genelist; depending on the value of asframe.
+#' @export
 godb_goids2genesymbols = function(goids,asframe=T){
   if(asframe){ getfield='*'; }
   else{ getfield='genesymbol'; }
@@ -432,6 +434,7 @@ dataframe_getgenesymbols=function(d){
 #Use NaN (or a very large number, e.g., infinity) for a score to disable it.
 #If you need to get the list of genes from different sources separately in a list, set getseparate=T.
 #compartments_score=2 threshold works best (based on experience)
+#' @export
 getsurfacegenes=function(genesymbols=NULL, spc_score=0, compartments_score=2, uniprot_ecmtotallength=NaN,getseparate=FALSE){
   if(is.data.frame(genesymbols)){
     stopfif(getseparate, "getseparate option is only available for a genesymbol list, and not for a dataframe.");
