@@ -23,11 +23,10 @@ The tool extracts quantitative features from each of these databases to evaluate
 
 <p align="center">
 
-<img src="img/IMMUNOTAR_ExtractedFeatures.png" height="80"/>
+<img src="img/IMMUNOTAR_ExtractedFeatures.png" height="100"/>
 
 </p>
 
-Include image(s) -- workflow? example results?
 
 
 ## Installation
@@ -46,9 +45,10 @@ devtools::install_github('sacanlab/immunotar')
 
 ## Example Usage
 
-### View the vignettes available in the immunotar package
+View the vignettes available in the immunotar package [immunotar](vignettes/immunotar.html).
+
 ```r
-browseVignettes('immunotar)
+browseVignettes('immunotar')
 ```
 
 ### Prioritize genes for a cancer type without providing additional experimental data

@@ -4,7 +4,7 @@
 # The datafile may contain {datadir} are {userdatadir}, which are replaced with myconfig('datadir'), etc.
 # File names (unless they already exist in the cwd) are adjusted relative to the folder containing this yml file.
 
-importdefaultsparams: T  #this is equivalent to using importfiles to import the default params (demonstrated below).
+importdefaultparams: T  #this is equivalent to using importfiles to import the default params (demonstrated below).
 importoptimizedparams: T #this is equivalent to using importfiles to import the optimized params (demonstrated below).
 
 #You can import other configuration files using "importfiles" entry. See the content of the imported files for the options you can change.

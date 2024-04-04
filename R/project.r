@@ -993,16 +993,22 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
   colnames(d)=project_shortenfeaturenames(cols = colnames(d),...)
   installpackageifmissing_bioc('ComplexHeatmap')
   #installpackageifmissing('viridis')
-  col = RColorBrewer::brewer.pal(name = "GnBu", n = 5)
+  col = RColorBrewer::brewer.pal(name = "Purples", n = 5)
   if(!is.null(o$markgenesby)){
     d[,colnames(d)[grepl('opentargets', colnames(d))]]=NULL
   }
-  h=ComplexHeatmap::pheatmap(d,fontsize=14,show_rownames=T, show_colnames = T, treeheight_row = 0,
+  #ht_opt=ComplexHeatmap::ht_opt()
+  #ht_opt$heatmap_row_names_gp= grid::gpar(fontsize = 20)
+  #ht_opt$heatmap_column_names_gp= grid::gpar(fontsize = 20)
+  
+  h=ComplexHeatmap::pheatmap(d,fontsize=15,show_rownames=T, show_colnames = T, treeheight_row = 0,
                              treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
                              color = col, na_col = 'grey', border_color = 'white', 
-                             cellwidth = 25, cellheight =15, 
-                             heatmap_legend_param = list(title = legendtitle, title_gp= grid::gpar(fontsize = 14),
-                                                         labels_gp = grid::gpar(fontsize = 14)))
+                             cellwidth = 25, cellheight =15, fontfamily = 'sans',fontsize_col = 15,
+                             fontsize_row = 15,
+                             heatmap_legend_param = list(title = legendtitle, 
+                                                         title_gp= grid::gpar(fontsize = 15),
+                                                         labels_gp = grid::gpar(fontsize = 15)))
   
   
   o$markgenesby=csv(o$markgenesby);
@@ -1013,13 +1019,17 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
     if(!length(I)){ next; }
     pch=rep(NA,nrow(d));
     pch[I]=20; #this is just the marker style. google pch style.
-    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch))
+    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 15), pt_gp = grid::gpar(fontsize = 15)))
     if(by=='opentarget'){by='PMTL'}
     an@anno_list$NEEDTOCHANGE@label=by; #I couldn't change the name of the annot without this hack.
     h=h+an
+    print(h)
   }
   if(!isempty(o$markgenesby)){ #adding right-annotations mess up the labels and we have to reannotate here.
-    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d))); #,location = unit(0, "npc"), just = "left"))
+    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d),gp = grid::gpar(fontsize = 15))); 
+    
+    #,location = unit(0, "npc"), just = "left"))
+
   }
   
   fig_export(h,o);

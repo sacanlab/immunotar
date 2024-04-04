@@ -1,11 +1,12 @@
 ---
 title: "immunotar"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{immunotar}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+    df_print: paged
+vignette: "%\\VignetteIndexEntry{immunotar} %\\VignetteEngine{knitr::rmarkdown} %\\VignetteEncoding{UTF-8}\n"
 ---
+
+
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -14,22 +15,34 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(immunotar)
+IMMUNOTAR is equipped with multiple databases that a user can also query to obtain information from
 
-#IMMUNOTAR is equiped with multiple datasets that include various diseases 
-
+```{r}
+rm(list=ls())
 ##Can use the depmap function to search what cell-lines associated to phenotype is found in depmap 
 immunotar::depmapdb_searchsamples('rhabdomyosarcoma')
+##This depmap function will extract the dependencies for each gene within each of the cell lines in the queried phenotype. The cell-line is the "depmapid" column and the name is extracted from the function about  
+dep=immunotar::depmapdb_getgenedependency('rhabodmyosarcoma')
+head(dep)
 
-##Search through theratar database on diseases that are included 
-immunotar::theratardb_searchdisease()
+##Search through Therapeutic drug database (TTD) and the The Database of Antibody-drug Conjugates (ADC-db) on diseases that are included and get the exact name of the disease to query further 
+immunotar::theratardb_searchdisease('rhabdomyosarcoma')
+immunotar::theratardb_disease2genesymbols('rhabdomyosarcoma')
+
+##Diseases like T-cell leukemia may have many subtypes included in these databases so we recommend searching through what is included and how it is referred to if you plan to include in your dataset
+immunotar::theratardb_searchdisease('t-cell')
+
+##This will include a search with all disease names that have the word t-cell in it. 
+immunotar::theratardb_disease2genesymbols('%t-cell%')
+
+
 ```
 
+IMMUNOTAR can be run on either a list created by the user or a .yaml file with all configuration for the project included. Below are a few examples for running IMMUNOTAR \n \n
 
-```{r setup}
-#IMMUNOTAR can be run on either a list created by the user or a .yaml file with all datasheet included
-##This project will list all genes in the human surface genes and enriches with the databases listed under enrich 
+```{r}
+##This project will list all genes in the human surface genes and enriches with the databases listed under enrich. Enrichment with databases such as depmap will need an additional argument of depmapids to give immunotar a phenotype to query 
+
 proj = list(
 	dataset='__ALLHUMANSURFACEGENES__'  # The starting point is all human surface genes
 	,enrich=list(
@@ -42,22 +55,121 @@ proj = list(
 ##Perform dataset enrichment and prioritization analysis:
 proj = immunotar::project_run(proj)
 
-###Looking at the resulting data with score 
+###Looking at the resulting data with score dataframe:  
 head(proj$datawithscore)
-a=proj$datawithscore
-##To view the top 10 ranked genes in the dataset and a heatmap looking at the values of the highest weighted features 
+
+##To view the top 10 ranked genes in the dataset and a heatmap looking at the scaled values of the highest weighted features 
 immunotar::project_resultheatmap(proj)
 
-##To view validated targets in the dataset and identify where the targets are ranked 
-
-###Add in the validated postives and negatives into the project to mark in the rank plot 
+##To view validated targets in the dataset and identify where the targets are ranked using IMMUNOTAR, Add in the validated postives and negatives into the project to mark in the rank plot 
 proj$validatedpositives=c('CCR5', 'CTLA4')
 proj$validatednegatives=c('BOK')
 immunotar::project_rankplot(proj)
+```
+
+You may give IMMUNOTAR an excel spreadsheet with the expression data. Format will be samples on the columns and genes on the rows.
+
+    
+```{r}
+proj = list( dataset = system.file("data", "demo_experiment.xlsx", package="immunotar"))
+
+# Running IMMUNOTAR without specific enrichment data-bases listed will enrich with the default databases: "gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface"
+proj = immunotar::project_run( proj )
+
+#Below you can print all the options that are run within the project. The project will run with optimized parameters by default. If you do not want to run with optimized parameters, feed in "importoptimizedparams=F" in the project_run command. 
+proj$enrich
+proj$colweight
+proj$colcurve
+proj$colrescale
+proj$rescale
+proj$importoptimizedparams
+
+head(proj$datawithscore[,'score',drop=F])
+```
+
+Another way to run IMMUNOTAR is by feeding it a yaml file that has all the needed configurations of the project. An example of a yaml file with all the options is given within IMMUNOTAR package and seen below 
+
+
+
+```{r}
+#The yaml file itself has comments describing the options and how to set them. 
+proj.config = yaml::read_yaml(system.file("data", "demo_project.yml", package="immunotar"))
+
+#Can run through the yml file 
+proj = immunotar::project_run(proj.config)
+
+#OR can also feed the yml file directly from the folder 
+proj = immunotar::project_run(system.file("data", "demo_project.yml", package="immunotar"))
+
+#User can also use project_load which loads in the dataset without enriching with other databases. 
+proj.load=immunotar::project_load(system.file("data", "demo_project.yml", package="immunotar"))
+#You can edit the options post loading in a project such as below 
+proj.load$importdefaultparams=F
+proj.load$importdefaultsparams=F
+proj.load$enrich$enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
+proj.load$knownpositives=c('ALK','GPC2')
+proj = immunotar::project_run(proj.load)
 
 ```
 
+You have the capability to optimize based on your own dataset using code below: 
 
-```{r setup}
+
+```{r}
+# #Default parameters for projects_optimweightsandcurves()
+# #"OO" stands for "OPTIMIZATION OPTIONS"
+# #OO_reset=function(){
+# OO=list(
+#   hardzeroweights='opentargetsurface_isopentargetsurface'
+#   ,freshstart=F #when true, we start with the defaultparams file instead of the optimizedparams file.
+#   ,method=csv('L-BFGS-B,SANN,Nelder-Mead,ga,Nelder-Mead,checkzeros,sfs') #the methods are listed here, but we manually use one or more below and run them separately.
+#   ,numrepeats=1 #For randomized methods, repeating may result in different results. How many times should we repeat?
+#   ,trace=1,
+#   methodcontrols=list(
+#   'SANN'=list(maxit=var_pick(DEVMODE,5,1000))
+#   ,'Nelder-Mead'=list(
+#     reltol=0.001
+#     ,enforcesign=T, lower=-3, upper=3 #enforcesign will trigger the use of boxconstraint version of Nelder-Mead.
+#   ) 
+#   ,sfs=list(
+#     abstol=0.001 #what level of accuracy improvement (forward) or reduction (reverse-elimination) are we willing to accept?
+#    ,suboptim=T
+#    ,groupweightsandcurves=F #when false, use osubtim$method=Brent to optimize individual parameters.
+#    ,osuboptim=list(singlepar=T,method="Brent",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T, lower=-3, upper=3,maxit=1000)
+#    #,osuboptim=list(singlepar=T,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T,,maxit=1000)
+#    #,osuboptim=list(singlepar=T,method="SANN",reltol=var_pick(DEVMODE,0.1,0.001),trace=0,enforcesign=F, OO$softenforceweightsigns,maxit=100)
+#    #,osuboptim=list(singlepar=T,method="L-BFGS-B",trace=0,enforcesign=T, lower=-3, upper=3,maxit=100)
+#    ,doparallel=var_pick(DEVMODE,F,T)
+#    ,enforcesign=T, lower=-3, upper=3
+#   )
+#   ,parranges=list(
+#     abstol_accept= 0.001 #minimum improvement for updating parameters.
+#     ,abstol_walk= -0.001 #keep walking while allowing this much sacrifice in eval.
+#     ,stepsize='1%',repeatifimproved=F,maxsteps=100,enforcesign=T, lower=-3, upper=3, centerinrange=F, trace=1
+#   )
+#   ,'ga'=list(
+#     popSize=var_pick(DEVMODE,5,1000),maxit=var_pick(DEVMODE,5,100),stalerun=10,parallel=T
+#     ,enforcesign=T, lower=-3, upper=3
+#     ,suboptim=T,osuboptim=list(method="Nelder-Mead",poptim = 0.05,pressel=0.5,control=list(fnscale=-1,reltol=var_pick(DEVMODE,0.1,0.001),trace=0)) #it runs optim() quietly, so trace>0 would be a waste.
+#     ,savepopulation=T
+#     ,jittersuggestions=0
+#    )
+#   ,'L-BFGS-B'=list(reltol=0.01,lower=-3,upper=3)
+#   )
+#   , optimizedparamsfile=T,devmode=DEVMODE,trace=1, removeredundancy=T
+#   ,Iweights=NULL,Icurves=NULL #don't change these, but use subsets to control weights vs. curve optimization.
+#   ,subsets='weights+curves' #csv of 'weights,curves,weights+curves'. Leave NULL to decide automatically (all three on fresh start, only weights+curves on non-fresh start)
+#   ,doparallel=T, setupcluster=!DEVMODE||!sys_issacanlap()
+#   
+#   # after the SFS optim (STEP 1 below), we now lock in the zero-weights and zero-curves, so they do not get added again. We also lock gtex_numtissuesgt10tpm_percentile.
+#   ,lockzeroweights=T
+#   ,lockzerocurves=F
+#   ,lockweights='' #prevent this from changing during optimization, it usually gets smaller while others take over. We usually use/check gtex to see if something is a good target; so it is favorable to maintain a high weight for gtex.
+#   ,updateoptimizedparams_abstolperparam=0.001 #what is the minimum improvement for each additional feature, to update the yamlfile.
+#   )
+# 
+# return(OO);
+# }
+# OO=OO_reset()
 
 ```
