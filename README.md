@@ -21,13 +21,6 @@ The public databases queried within IMMUNOTAR are divided into four categories: 
 
 The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria.
 
-<p align="center">
-
-<img src="img/IMMUNOTAR_ExtractedFeatures.png" height="100"/>
-
-</p>
-
-
 
 ## Installation
 
