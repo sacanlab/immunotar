@@ -8,7 +8,7 @@ importdefaultparams: T  #this is equivalent to using importfiles to import the d
 importoptimizedparams: T #this is equivalent to using importfiles to import the optimized params (demonstrated below).
 
 #outfile: 'demo_project_result.xlsx'
-knownpositives: 'ALK,MEGF10'
+knownpositives: 'ALK','MEGF10'
 dataset:
   datafile: 'demo_experiment.xlsx'
   handlenan: 0 #replace NA's with a value. default is 'none', which leaves NA's as is. see data_handlenan() for options.

@@ -107,69 +107,31 @@ proj.load=immunotar::project_load(system.file("data", "demo_project.yml", packag
 proj.load$importdefaultparams=F
 proj.load$importdefaultsparams=F
 proj.load$enrich$enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
-proj.load$knownpositives=c('ALK','GPC2')
+proj.load$knownpositives=c('ALK', 'MEGF10', 'GPC2', 'CD276', 'CD19')
 proj = immunotar::project_run(proj.load)
 
 ```
 
-You have the capability to optimize based on your own dataset using code below: 
+You have the capability to optimize based on your own dataset using code below. We show-case the use for Nelder-Mead but you can also use other optimization options such as SANN, LGSFS 
 
 
 ```{r}
-# #Default parameters for projects_optimweightsandcurves()
-# #"OO" stands for "OPTIMIZATION OPTIONS"
-# #OO_reset=function(){
-# OO=list(
-#   hardzeroweights='opentargetsurface_isopentargetsurface'
-#   ,freshstart=F #when true, we start with the defaultparams file instead of the optimizedparams file.
-#   ,method=csv('L-BFGS-B,SANN,Nelder-Mead,ga,Nelder-Mead,checkzeros,sfs') #the methods are listed here, but we manually use one or more below and run them separately.
-#   ,numrepeats=1 #For randomized methods, repeating may result in different results. How many times should we repeat?
-#   ,trace=1,
-#   methodcontrols=list(
-#   'SANN'=list(maxit=var_pick(DEVMODE,5,1000))
-#   ,'Nelder-Mead'=list(
-#     reltol=0.001
-#     ,enforcesign=T, lower=-3, upper=3 #enforcesign will trigger the use of boxconstraint version of Nelder-Mead.
-#   ) 
-#   ,sfs=list(
-#     abstol=0.001 #what level of accuracy improvement (forward) or reduction (reverse-elimination) are we willing to accept?
-#    ,suboptim=T
-#    ,groupweightsandcurves=F #when false, use osubtim$method=Brent to optimize individual parameters.
-#    ,osuboptim=list(singlepar=T,method="Brent",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T, lower=-3, upper=3,maxit=1000)
-#    #,osuboptim=list(singlepar=T,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T,,maxit=1000)
-#    #,osuboptim=list(singlepar=T,method="SANN",reltol=var_pick(DEVMODE,0.1,0.001),trace=0,enforcesign=F, OO$softenforceweightsigns,maxit=100)
-#    #,osuboptim=list(singlepar=T,method="L-BFGS-B",trace=0,enforcesign=T, lower=-3, upper=3,maxit=100)
-#    ,doparallel=var_pick(DEVMODE,F,T)
-#    ,enforcesign=T, lower=-3, upper=3
-#   )
-#   ,parranges=list(
-#     abstol_accept= 0.001 #minimum improvement for updating parameters.
-#     ,abstol_walk= -0.001 #keep walking while allowing this much sacrifice in eval.
-#     ,stepsize='1%',repeatifimproved=F,maxsteps=100,enforcesign=T, lower=-3, upper=3, centerinrange=F, trace=1
-#   )
-#   ,'ga'=list(
-#     popSize=var_pick(DEVMODE,5,1000),maxit=var_pick(DEVMODE,5,100),stalerun=10,parallel=T
-#     ,enforcesign=T, lower=-3, upper=3
-#     ,suboptim=T,osuboptim=list(method="Nelder-Mead",poptim = 0.05,pressel=0.5,control=list(fnscale=-1,reltol=var_pick(DEVMODE,0.1,0.001),trace=0)) #it runs optim() quietly, so trace>0 would be a waste.
-#     ,savepopulation=T
-#     ,jittersuggestions=0
-#    )
-#   ,'L-BFGS-B'=list(reltol=0.01,lower=-3,upper=3)
-#   )
-#   , optimizedparamsfile=T,devmode=DEVMODE,trace=1, removeredundancy=T
-#   ,Iweights=NULL,Icurves=NULL #don't change these, but use subsets to control weights vs. curve optimization.
-#   ,subsets='weights+curves' #csv of 'weights,curves,weights+curves'. Leave NULL to decide automatically (all three on fresh start, only weights+curves on non-fresh start)
-#   ,doparallel=T, setupcluster=!DEVMODE||!sys_issacanlap()
-#   
-#   # after the SFS optim (STEP 1 below), we now lock in the zero-weights and zero-curves, so they do not get added again. We also lock gtex_numtissuesgt10tpm_percentile.
-#   ,lockzeroweights=T
-#   ,lockzerocurves=F
-#   ,lockweights='' #prevent this from changing during optimization, it usually gets smaller while others take over. We usually use/check gtex to see if something is a good target; so it is favorable to maintain a high weight for gtex.
-#   ,updateoptimizedparams_abstolperparam=0.001 #what is the minimum improvement for each additional feature, to update the yamlfile.
-#   )
-# 
-# return(OO);
-# }
-# OO=OO_reset()
+#To optimize you need to have a project with knownpositives or else the optimization scheme will produce the same weights vector. By default the optimization only happens on the weight vector. 
+
+proj.load=immunotar::project_load(system.file("data", "demo_project.yml", package="immunotar"))
+proj.load$knownpositives=c('ALK', 'MEGF10', 'GPC2', 'CD276', 'CD19')
+proj = immunotar::project_run(proj.load)
+
+#You can optimize multiple projects at once by include them all in  a list. The input to the optimization function has to be a list, even if it just contains a single project. 
+
+ps=list(proj)
+
+#Different parameters can be applied to the optimization such as the relative tollerance to stop optimization, enforcing the sign of the original weight vector that is being optimized and the limits of the factor assigned (lower and upper). The trace function prints the progress of the optimization and the lockweights enables the user to ask the optimization algorithm to not alter the weights of certain parameters. This can be done by giving the lockweights a vector of parameter names
+
+optim_params=immunotar::projects_optimweightsandcurves(ps, method="Nelder-Mead", reltol=0.001, enforcesign=T, lower=-3, upper=3, trace=0, lockweights='')
+
+#The new optimized weights 
+optim_params$weights
+
 
 ```

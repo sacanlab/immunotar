@@ -223,8 +223,9 @@ library(ggplot2);
 
 for(folder in csv('sfs.forward,sfs.reverse.withoptim,sfs.reverse.withoutoptim')){
   dg=projects_sfs_summarizeimpact_frommultirun(folder=folder, grouped=T,overwrite=F)
+  dg$datasource[which(dg$datasource == 'expr')]='cancer_exp'
   dg$datasource <- factor(dg$datasource, levels=dg$datasource)
-  g=ggplot(dg, aes(x=datasource,y=impact,fill=datasource)) + geom_bar(stat = 'identity',color='black') + ggtitle(folder) + scale_fill_brewer(palette = 'PRGn') + theme_classic() + ylab("MAP Score Impact") + theme(axis.text.x=element_text(angle = 90, hjust=0.95,vjust=0.2)) + theme(text = element_text(size=20,family = "sans"), legend.position = "none") + xlab('') + ggtitle('');
+  g=ggplot(dg, aes(x=datasource,y=impact)) + geom_bar(stat = 'identity',color='black', fill='darkgrey') + ggtitle(folder) + theme_classic() + ylab("MAP Score Impact") + theme(axis.text.x=element_text(angle = 90, hjust=0.95,vjust=0.2)) + theme(text = element_text(size=20,family = "Times New Roman"), legend.position = "none") + xlab('') + ggtitle('');
   print(g);
 }
 

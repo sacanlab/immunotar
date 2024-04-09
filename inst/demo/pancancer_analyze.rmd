@@ -118,27 +118,35 @@ for(col in cols){
 
 DEVMODE=F
 
-ps.default=pancancer_pediatricprojects(devmode=DEVMODE, )
-
-ps.default=projects_run(ps.default)
+ps.default=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile="project_defaultparams.yml")
 
 mean(unlist(lists_extractfield(ps.default, 'rankeval')))
-
-ps.op=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile= 'project_optimizedparams_noopentarget_RS.02.24.24.updating.yml')
 
 #this is Ahmets final optimization 
 ps.as=pancancer_pediatricprojects(devmode=DEVMODE)
 
+ps.as[[1]]$datawithscore
 
-mean(unlist(lists_extractfield(ps.op, 'rankeval')))
-mean(unlist(lists_extractfield(ps.as, 'rankeval')))
 
+res_list=list()
+
+for(i in 1:length(ps.as)){
+  res_list[[i]]=ps.as[[i]]$datawithscore
+}
+
+disease=unlist(lists_extractfield(ps.as, 'disease'))
+
+names(res_list)=disease
+
+openxlsx::write.xlsx(res_list, "../doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/Supplemental_tables_results.xlsx", rowNames=T)
+
+
+ps.as[[1]]$datawithscore
 mean(unlist(lists_extractfield(ps.as, 'rankeval')))/
 mean(unlist(lists_extractfield(ps.default, 'rankeval')))
 
 level_order=csv('NSCLC,AML,ML,BLL,TLL,BL,T-ALL,NBL,OS,ES,B-ALL,RMS')
 
-summary_score1=projects_summarizeresults(ps.op)
 summary_score2=projects_summarizeresults(ps.as)
 projects_heatmap_scores(ps.op, levels = level_order )
 projects_heatmap_scores(ps.as, levels = level_order )
@@ -167,7 +175,7 @@ plot_mapscores=function(ps.optimized, ps.default){
                   ggplot2::aes(x=factor(phenotype, level=level_order),y=value, fill=variable)) + 
     ggplot2::geom_bar(stat = 'identity', position=ggplot2::position_dodge()) + ggplot2::theme_bw() + 
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 90, size = 12, hjust=0.95,vjust=0.2)) + 
-    ggplot2::theme(text = ggplot2::element_text(size=12)) + 
+    ggplot2::theme(text = ggplot2::element_text(size=20, family = "Times New Roman")) + 
     ggplot2::scale_fill_manual(values=c('grey', 'black'))+
     ggplot2::xlab('') + ggplot2::ylab('MAP Score') + ggplot2::labs(fill='MAP scores')
   print(g)

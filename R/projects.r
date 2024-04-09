@@ -838,7 +838,7 @@ projects_summarizeresults=function(ps,pnames=NULL){
 #by Rawan
 
 #' @export
-projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='IMMUNOTAR\nScore '){
+projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='Gene\nscore\n '){
   s=projects_summarizeresults(ps)
   
   if(is.null(rows)){
@@ -873,7 +873,7 @@ projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='IMMUNOT
   p.known=p.known[,levels]
   plot=cbind(plot,avg)
   p.known=cbind(p.known,'')
-  col = RColorBrewer::brewer.pal(name = "BuPu", n = 5)
+  col = RColorBrewer::brewer.pal(name = "Blues", n = 5)
   ComplexHeatmap::pheatmap(plot,fontsize=14, show_rownames=T, 
                            show_colnames = T, treeheight_row = 0,
                            treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
@@ -881,9 +881,11 @@ projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='IMMUNOT
                            border_color ='white', 
                            cellwidth = 25, cellheight =15, 
                            display_numbers = as.matrix(p.known),
-                           fontsize_number = 18, number_color = 'black',
-                           heatmap_legend_param = list(title = legendtitle, title_gp= grid::gpar(fontsize = 14),
-                                                       labels_gp = grid::gpar(fontsize = 14)))
+                           fontsize_number = 15, fontfamily = 'Times', number_color = 'black', 
+                      
+                           heatmap_legend_param = list(title = legendtitle, 
+                                                       title_gp= grid::gpar(fontsize = 15,fontfamily='Times'),
+                                                       labels_gp = grid::gpar(fontsize = 15, fontfamily='Times')))
   
 }
 

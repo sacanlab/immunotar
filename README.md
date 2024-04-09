@@ -45,7 +45,7 @@ devtools::install_github('sacanlab/immunotar')
 
 ## Example Usage
 
-View the vignettes available in the immunotar package [immunotar](vignettes/immunotar.html).
+View the vignettes available in the immunotar package [immunotar](https://htmlpreview.github.io/?https://github.com/sacanlab/immunotar/blob/master/vignettes/immunotar.html).
 
 ```r
 browseVignettes('immunotar')

@@ -864,7 +864,7 @@ project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ..
   g=ggplot(dplot, aes(x=rank, y=score)) + geom_point(aes(color=isknowntarget), size=3)+
     scale_color_manual(values=c('grey', 'springgreen3')) +
     theme_bw() + theme(legend.position = 'none') +
-    theme(text=element_text(size=14));
+    theme(text=element_text(size=14, family='Times New Roman'));
   if(o$includequantile){
     g=g+geom_hline(yintercept =as.numeric(quantile(dplot$score, 0.98)), linetype='dashed', color='purple') +
       geom_hline(yintercept =as.numeric(quantile(dplot$score)[2]), linetype='dashed') +
@@ -875,7 +875,7 @@ project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ..
   if(is.null(o$nudge_y)){ o$nudge_y=diff(range(dplot$score,na.rm=T))/20; }
   if(!isempty(I)){
     g=g+geom_label_repel(aes(label=label, fill=dplot$isvalidtarget), max.overlaps = 1500, nudge_x
-                         =o$nudge_x,nudge_y=o$nudgey) + scale_fill_manual(values=c('white', 'cadetblue2',
+                         =o$nudge_x,nudge_y=o$nudgey, family='Times New Roman') + scale_fill_manual(values=c('white', 'cadetblue2',
                          'tomato1')) + ylab('IMMUNOTAR Score')
   }
   
@@ -1000,15 +1000,16 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
   #ht_opt=ComplexHeatmap::ht_opt()
   #ht_opt$heatmap_row_names_gp= grid::gpar(fontsize = 20)
   #ht_opt$heatmap_column_names_gp= grid::gpar(fontsize = 20)
-  
+  colnames(d)[which(colnames(d) == 'opentargetsurface')]='PMTLSurface'
+  colnames(d)[which(colnames(d) == 'expr')]='cancer_expr'
   h=ComplexHeatmap::pheatmap(d,fontsize=15,show_rownames=T, show_colnames = T, treeheight_row = 0,
                              treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
                              color = col, na_col = 'grey', border_color = 'white', 
-                             cellwidth = 25, cellheight =15, fontfamily = 'sans',fontsize_col = 15,
+                             cellwidth = 25, cellheight =15, fontfamily = 'Times',fontsize_col = 15,
                              fontsize_row = 15,
                              heatmap_legend_param = list(title = legendtitle, 
-                                                         title_gp= grid::gpar(fontsize = 15),
-                                                         labels_gp = grid::gpar(fontsize = 15)))
+                                                         title_gp= grid::gpar(fontsize = 15, fontfamily='Times'),
+                                                         labels_gp = grid::gpar(fontsize = 15, fontfamily='Times')))
   
   
   o$markgenesby=csv(o$markgenesby);
@@ -1019,15 +1020,18 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
     if(!length(I)){ next; }
     pch=rep(NA,nrow(d));
     pch[I]=20; #this is just the marker style. google pch style.
-    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 15), pt_gp = grid::gpar(fontsize = 15)))
+    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 15, fontfamily='Times'), pt_gp = grid::gpar(fontsize = 15,fontfamily='Times')))
     if(by=='opentarget'){by='PMTL'}
+    if(by=='curated'){by='Validated'}
     an@anno_list$NEEDTOCHANGE@label=by; #I couldn't change the name of the annot without this hack.
     h=h+an
-    print(h)
   }
   if(!isempty(o$markgenesby)){ #adding right-annotations mess up the labels and we have to reannotate here.
-    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d),gp = grid::gpar(fontsize = 15))); 
-    
+    print(h)
+    print(colnames(d))
+    print(rownames(d))
+    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d), gp = grid::gpar(fontsize = 15, fontfamily='Times')))  
+   
     #,location = unit(0, "npc"), just = "left"))
 
   }
