@@ -135,7 +135,7 @@ if(!isempty(suggestions)){
 if(var_tobool(jittersuggestions)&&!isempty(suggestions)){
   suggestions=jitter(suggestions,amount=jittersuggestions);
 }
-
+#browser();
 
 #msgf(list(lower=lower,upper=upper))
 if(!exists('myga')){ source('ga.R'); } #ahmet: I downloaded a copy of ga.R so I can debug why parallel cluster is not working.
@@ -259,7 +259,7 @@ myoptim=function(par,fn,o=NULL,...){
   enforcesign = var_pickfirstnotnull(o$control$enforcesign,o$enforcesign, F);
   if(var_tobool(enforcesign)&&is.null(o$parsigns)){
     #o$parsigns=sign(par); no need to keep sign, just use the actual numbers?
-    o$parsigns=sign(par);
+    o$parsigns=par;
   }
   #if the method can internally support box-constraints, don't use an enforcesign wrapper function.
   if(var_tobool(enforcesign) && optim_isboxconstraintmethod(o$method,TRUE,TRUE)){
@@ -306,6 +306,7 @@ myoptim=function(par,fn,o=NULL,...){
   if(!is.null(lower)){
     I=par<lower;
     if(any(I)){
+      #browser();
       warnf('Parameter(s) %s had initial value(s) %s, which is lower than the lower bound %s. Changing them to lower bound before running optimization ...',str_csv(o$parnames[I]),str_csv(par[I]),str_csv(lower[I]))
       par[I]=lower[I];
     }
@@ -313,6 +314,7 @@ myoptim=function(par,fn,o=NULL,...){
   if(!is.null(upper)){
     I=par>upper;
     if(any(I)){
+      #browser();
       warnf('Parameter(s) %s had initial value(s) %s, which is higher than the upper bound %s. Changing them to upper bound before running optimization ...',str_csv(o$parnames[I]),str_csv(par[I]),str_csv(upper[I]))
       par[I]=upper[I];
     }
@@ -352,7 +354,7 @@ myoptim=function(par,fn,o=NULL,...){
   }
   #
   else if(str_incsv('L-BFGS-B',o$method)){
-    msgf('Using the box-constrained method %s with lower=%s and upper=%s',o$method,str_csv(lower),str_csv(upper));
+    msgfif(o$control$trace,'Using the box-constrained method %s with lower=%s and upper=%s',o$method,str_csv(lower),str_csv(upper));
     installpackageifmissing('optimx');
     res=optimx::optimx(par,fn,method=o$method, control=list_removefields(o$control,'lower','upper'),lower=lower,upper=upper, ...);
     #optimx gives a dataframe with p1, p2,etc. for pars. Converting it to a list format as optim() does.
@@ -361,10 +363,12 @@ myoptim=function(par,fn,o=NULL,...){
     res$par=unlist(res[grepl('^p\\d+$',names(res))]);
   }
   else if(o$method=='Nelder-Mead'&&(!is.null(lower)||!is.null(upper))){
-    msgf('Using the box-constrained method %s with lower=%s and upper=%s',o$method,str_csv(lower),str_csv(upper));
+    msgfif(o$control$trace,'Using the box-constrained method %s with lower=%s and upper=%s',o$method,str_csv(lower),str_csv(upper));
     installpackageifmissing('lme4');
     o$control=list_renamefields(o$control,'trace','verbose', 'reltol','FtolRel', 'abstol','FtolAbs');
-    o$control=list_removefields(o$control,'fnscale');
+    o$control$verbose=0; o$control$iprint=0;
+    #o$control=list_removefields(o$control,'fnscale');
+    o$control=o$control[names(o$control) %in% arr_csv('iprint,maxfun,FtolAbs,FtolRel,XtolRel,MinfMax,xst,xt,verbose,warnOnly') ];
     oldfn=fn;
     fn=function(par){ return(var_pick(o$maximize,-1,1)*oldfn(par,...)); }
     res=lme4::Nelder_Mead(fn,par,control=list_removefields(o$control,'lower','upper'),lower=lower,upper=upper)

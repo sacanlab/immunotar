@@ -108,6 +108,9 @@ var_issameobject=function(a,b){
   if(is.function(a)||is.function(b)){ return(identical(all.equal(a,b),TRUE)); }
   else{ return(tracemem(a)==tracemem(b)); }
 }
+var_equals=function(a,b){
+  return(var_issameobject(a,b)||identical(a,b));
+}
 #check one or more variables, return the first non-null, and raise error if they are all null.
 requirearg=function(...,msg){
   if(missing(msg)){ stop('func_requireinput requires the msg input; you need to provide the msg as a named argument.'); }
@@ -152,6 +155,9 @@ warnfif=function(cond,...){ if(var_tobool(cond)){ warning(str_ensureeol(sprintfy
 #warnfif=function(cond,s,...){ if(var_tobool(cond)){ st=dbg_nicestack(2); warnf(paste0('%s: ',s),st,...); } }
 dbg_warnf=function(s,...){ st=dbg_nicestack(2); warnf(paste0('%s: ',s),st,...); }
 dbg_warnfif=function(cond,s,...){ if(var_tobool(cond)){ st=dbg_nicestack(2); warnf(paste0('%s: ',s),st,...); } }
+dbg_stopif=function(cond=NULL){ if(missing(cond)||var_tobool(cond)){ browser(); } }
+dbg_stop=function(){ browser(); }
+
 
 arr_isunique=function(vec){return(!any(duplicated(vec))); }
 vec_isunique=function(vec){return(!any(duplicated(vec))); }
@@ -164,6 +170,8 @@ arr_groupby=function(vec,by){
   }
   return(ret);
 }
+###############################################################
+absmax = function(x) { x[which.max( abs(x))]}
 ###############################################################
 vec2dataframe=function(v, colnames_){
   ret=as.data.frame(as.list(v));
@@ -683,7 +691,6 @@ io_resolvepath=function(path,basedir=NULL){
 }
 ##############################################################
 # get a file path. if filename is not a full path and it does not already exist, return a path in config('datadir').
-#' @export
 getdatafile=function(filename){
   return(io_which(filename,'{datadir}'));
 }
@@ -788,6 +795,9 @@ io_filesize=function(file){
 }
 io_isfileandnotempty=function(file){
   return(io_isfile(file)&&var_tobool(io_filesize(file)));
+}
+io_isnotfileorempty=function(file){
+  return(!io_isfile(file)||!var_tobool(io_filesize(file)));
 }
 io_readraw=function(file){
   return(readBin(file, 'raw', file.info(file)$size));
@@ -935,8 +945,10 @@ map_lookupfromkeysandvalues=function(allkeys,allvalues,keys,keepifnotfound=TRUE,
     warnf('Duplicate keys detected; if they map to different values, the translation will only result in the first such value.');
   }
   
-  installpackageifmissing_github('nathan-russell/hashmap')
-  map=hashmap::hashmap(allkeys,allvalues);
+  #installpackageifmissing_github('nathan-russell/hashmap')
+  #map=hashmap::hashmap(allkeys,allvalues);
+  #Rawan changed 06/25
+  map=stats::setNames(allvalues, allkeys);
   I=map$has_keys(keys);
   if(all(I)){ return(map$find(keys)); }
 
@@ -1701,6 +1713,9 @@ io_mkdirif=function(dir){
   }
   return(dir);
 }
+io_mkfiledirif=function(path){
+  return(io_mkdirif(dirname(path)));
+}
 ###############################################################
 #just a helper function to create subdir if it is not there (mkdir's the subdir).
 sys_dirorsubdir_=function(dir,subdir=NULL){
@@ -1893,7 +1908,15 @@ data_readfile=function(file,format=NULL,rowNames=NULL,header=T,...){
     if(('rowname' %in% colnames(d))){
       rowNames='rowname';
     }
-    else if(nrow(d)>0 && ncol(d)>0 && is.character(d[,1])){ rowNames=1; }
+    else if(nrow(d)>0 && ncol(d)>0 && is.character(d[,1])){
+      rowNames=1;
+      #condition: don't use it if there are any blanks.
+      if(any(nchar(d[,1])==0)){ rowNames=NULL; }
+      else{
+       nums=as.numeric(d[,1]);
+       if(all(!is.na(nums))&&any(nums%%1 != 0)){ rowNames=NULL; }
+      }
+    }
     if(!is.null(rowNames)&&nrow(d)>0&&!arr_isunique(d[,rowNames])){ 
       warnfif(rowNames=='rowname','There is a column "rowname" available in the file [%s], but the entries are not unique. I will not set rownames of the dataframe.',file);
       rowNames=NULL;
@@ -2319,8 +2342,10 @@ xls_write=function(d,file,sheet=1,asTable=F,styleheader=NULL,open=F,append=F,col
 	if(o$styleheader&&is.null(o$headerStyle)){ o$headerStyle=openxlsx::createStyle(border='bottom',borderStyle='thick',textDecoration='bold'); }
 	
   #clear the old data.
-  Rs=w$worksheets[[sheet]]$sheet_data$rows;
-  Cs=w$worksheets[[sheet]]$sheet_data$cols;
+	sheet_=sheet; #w$worksheets[] has numeric indices.
+	if(is.character(sheet)){ sheet_=which(xls_sheetnames(file,w)==sheet); }
+  Rs=w$worksheets[[sheet_]]$sheet_data$rows;
+  Cs=w$worksheets[[sheet_]]$sheet_data$cols;
   R=var_pick(length(Rs),max(Rs),0);
   C=var_pick(length(Cs),max(Cs),0);
   if(!append&&(R>nrow(d) || C>ncol(d))){

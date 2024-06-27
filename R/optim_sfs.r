@@ -165,19 +165,32 @@ while(!isempty(pargroups)){
       }
       Ioptim=which(ISoptim);
     }
+    #warnf('optim_sfs(): REMEMBER TO REMOVE THIS LINE'); browser();
     if(!length(Ioptim)){
       value = fn(parg,...);
     }
     else{
       osub=osuboptim;
+      if(!is.null(o$parnames)){ osub$parnames=o$parnames[Ioptim]; }
+      if(length(osub$lower)>1){ osub$lower=osub$lower[Ioptim]; }
       if(length(osub$upper)>1){ osub$upper=osub$upper[Ioptim]; }
       if(!is.null(osub$parsigns)){ osub$parsigns=osub$parsigns[Ioptim]; }
       if(length(Ioptim)==1&&osub$method=='Nelder-Mead'){ osub$method='Brent'; } #for single-parameter optimization, optim() recommends Brent instead of Nelder-Mead.
-      if(var_tobool(osub$jitter)){ parg[Ioptim]=jitter(parg[Ioptim],amount=osub$jitter);  }
-
-      fnsub=function(subpar,...){ superpar=parg; superpar[Ioptim]=subpar; return(fn(superpar,...)); };
+      subpar=parg[Ioptim];
+      #browser();
+      if(var_tobool(osub$jitter)){
+        subpar=jitter(subpar,amount=osub$jitter);
+        if(!is.null(osub$lower)||!is.null(osub$upper)){
+          if(length(osub$lower)==1){ subpar[subpar<osub$lower]=osub$lower; }
+          else if(length(osub$lower)>1){ I=subpar<osub$lower; subpar[I]=osub$lower[I]; }
+          if(length(osub$upper)==1){ subpar[subpar>osub$upper]=osub$upper; }
+          else if(length(osub$upper)>1){ I=subpar>osub$upper; subpar[I]=osub$upper[I]; }
+        }
+      }
+      fnsub=function(subpar_,...){ superpar=parg; superpar[Ioptim]=subpar_; return(fn(superpar,...)); };
       if(!exists('myoptim')){ source_disabled__('optim.r'); }
-      subres=myoptim(parg[Ioptim],fnsub,osub);
+      #if(any(par>o$upper|par<o$lower)){ browser(); }
+      subres=myoptim(subpar,fnsub,osub);
       value=subres$value;
       parg[Ioptim]=subres$par;
     }
@@ -186,7 +199,7 @@ while(!isempty(pargroups)){
     #the following are alternative lines for straight for-loop vs. parallel/forloop function run. The for loop is more useful for debugging.
     #gress[[ig]]=gres; } #for loop
     return(gres);  }; gress[activepargroups] = list_map(forlength(activepargroups),sfs_evalithfeature,list(doparallel=o$doparallel),...);
-    #return(gres);  }; for(iga in forlength(activepargroups)){ gress[[activepargroups[[iga]]]]=sfs_evalithfeature(iga,...); }
+     #return(gres);  }; for(iga in forlength(activepargroups)){ gress[[activepargroups[[iga]]]]=sfs_evalithfeature(iga,...); }
   
   
   evals=unlist(lists_extractfield(gress,'value'));
@@ -212,7 +225,8 @@ while(!isempty(pargroups)){
   gres=gress[[bestig]];
   if(accept){
     msgfif(o$trace,'iter %d/%d, parind %s, ACCEPTED: [[ %f ]] <== %f  (impact:%f)  %s (parvalue %f <-- %f)',iter,maxiter,str_csv(inds),gres$value,besteval,var_pick(o$maximize,1,-1)*var_pick(isreverse,-1,1)*(gres$value-besteval), str_csv(o$parnames[inds]), str_csv(gres$par[inds]), str_csv(pariter[inds]));
-
+    if(any(gres$par>o$upper|gres$par<o$lower)){ browser(); }
+    
     bestpar=gres$par; besteval=gres$value;
     
     acceptbestbest=(isforward && optim_isbettereval(besteval,bestbesteval,o$maximize,abstol)) || (isreverse && optim_isequalorbettereval(besteval,bestbesteval,o$maximize,abstol));

@@ -7,7 +7,7 @@ rm(list=base::setdiff(ls(),c('DEVMODE')))
 source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r'); source('optim.r')
 
 # This rmd file is designed to run for a single optimizedparams and log file. Don't change it half-way this Rmd file. When you are running other analysis, you may need to config_reset() to switch b ack to the default files.
-config('project_optimizedparamsfile','project_optimizedparams_withcurves.yml');
+#config('project_optimizedparamsfile','project_optimizedparams_withcurves.yml');
 #config('project_optimizedparamsfile','KeepLogs/project_optimizedparams_withcurves.yml');
 
 if(sys_ischopserver()){ config('downloadurl.addmd5',F); }
@@ -19,62 +19,9 @@ catf(list_map(list(1,2),function(...){source('util.r'); return(list(cpu=sys_cpui
 
 res=list()
 
-#Default parameters for projects_optimweightsandcurves()
-#"OO" stands for "OPTIMIZATION OPTIONS"
-OO_reset=function(){
-OO=list(
-  hardzeroweights='opentargetsurface_isopentargetsurface'
-  ,freshstart=F #when true, we start with the defaultparams file instead of the optimizedparams file.
-  ,method=csv('L-BFGS-B,SANN,Nelder-Mead,ga,Nelder-Mead,checkzeros,sfs') #the methods are listed here, but we manually use one or more below and run them separately.
-  ,numrepeats=1 #For randomized methods, repeating may result in different results. How many times should we repeat?
-  ,trace=1,
-  methodcontrols=list(
-  'SANN'=list(maxit=var_pick(DEVMODE,5,1000))
-  ,'Nelder-Mead'=list(
-    reltol=0.001
-    ,enforcesign=T, lower=-3, upper=3 #enforcesign will trigger the use of boxconstraint version of Nelder-Mead.
-  ) 
-  ,sfs=list(
-    abstol=0.001 #what level of accuracy improvement (forward) or reduction (reverse-elimination) are we willing to accept?
-   ,suboptim=T
-   ,groupweightsandcurves=F #when false, use osubtim$method=Brent to optimize individual parameters.
-   ,osuboptim=list(singlepar=T,method="Brent",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T, lower=-3, upper=3,maxit=1000)
-   #,osuboptim=list(singlepar=T,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T,,maxit=1000)
-   #,osuboptim=list(singlepar=T,method="SANN",reltol=var_pick(DEVMODE,0.1,0.001),trace=0,enforcesign=F, OO$softenforceweightsigns,maxit=100)
-   #,osuboptim=list(singlepar=T,method="L-BFGS-B",trace=0,enforcesign=T, lower=-3, upper=3,maxit=100)
-   ,doparallel=var_pick(DEVMODE,F,T)
-   ,enforcesign=T, lower=-3, upper=3
-  )
-  ,parranges=list(
-    abstol_accept= 0.001 #minimum improvement for updating parameters.
-    ,abstol_walk= -0.001 #keep walking while allowing this much sacrifice in eval.
-    ,stepsize='1%',repeatifimproved=F,maxsteps=100,enforcesign=T, lower=-3, upper=3, centerinrange=F, trace=1
-  )
-  ,'ga'=list(
-    popSize=var_pick(DEVMODE,5,1000),maxit=var_pick(DEVMODE,5,100),stalerun=10,parallel=T
-    ,enforcesign=T, lower=-3, upper=3
-    ,suboptim=T,osuboptim=list(method="Nelder-Mead",poptim = 0.05,pressel=0.5,control=list(fnscale=-1,reltol=var_pick(DEVMODE,0.1,0.001),trace=0)) #it runs optim() quietly, so trace>0 would be a waste.
-    ,savepopulation=T
-    ,jittersuggestions=0
-   )
-  ,'L-BFGS-B'=list(reltol=0.01,lower=-3,upper=3)
-  )
-  , optimizedparamsfile=T,devmode=DEVMODE,trace=1, removeredundancy=T
-  ,Iweights=NULL,Icurves=NULL #don't change these, but use subsets to control weights vs. curve optimization.
-  ,subsets='weights+curves' #csv of 'weights,curves,weights+curves'. Leave NULL to decide automatically (all three on fresh start, only weights+curves on non-fresh start)
-  ,doparallel=T, setupcluster=!DEVMODE||!sys_issacanlap()
-  
-  # after the SFS optim (STEP 1 below), we now lock in the zero-weights and zero-curves, so they do not get added again. We also lock gtex_numtissuesgt10tpm_percentile.
-  ,lockzeroweights=T
-  ,lockzerocurves=F
-  ,lockweights='' #prevent this from changing during optimization, it usually gets smaller while others take over. We usually use/check gtex to see if something is a good target; so it is favorable to maintain a high weight for gtex.
-  ,updateoptimizedparams_abstolperparam=0.001 #what is the minimum improvement for each additional feature, to update the yamlfile.
-  )
-
-#OO$method=list_remove(OO$method,'SANN');
-return(OO);
-}
+OO_reset=projects_optimoptions; #OO_reset is now an alias for projects_optimoptions(). You can use either.
 OO=OO_reset();
+OO$doparallel=F
 
 ps=pancancer_pediatricprojects(onlysurfacegenes=F,devmode=DEVMODE,doparallel=OO$doparallel,immunoadd=10);
 ```
@@ -105,44 +52,8 @@ OO=OO_reset();
 if(DEVMODE){ OO$methodcontrols$ga$parallel=F; OO$doparallel=F; } #Useful when debugging. Commenting this line out will revert back to T (b/c of OO_reset())
 #if(DEVMODE){ OO$Iweights=1:3; OO$Icurves=1:3; }
 
-## RUN DIFFERENT OPTIMIZATION STRATEGIES
-source('util.r'); source('projects.r'); source('project.r'); source('pancancer.r'); source('optim.r'); source('optim_sfs.r')
-cmnt='';
-res=var_get('res'); #if there's a res, use it; otherwise use NULL.
 
-#OO$method='none'; cmnt=',recalculate-scores'; res=projects_optimrecipe__(res); stop();
-
-### [[ 1 ]]
-### SFS SINGLEPAR OPTIMIZATION: "Sequential Forward Selection with Brent's optimization to optimize the newly added parameter". Tends to limit the number of parameters selected, minimizes the computation time. A feature is added to the selected set, only if it improves the MAP score of the set by at least 0.1%.
-#OO$subsets='weights,curves'; OO$numrepeats=var_pick(DEVMODE,1,3); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; #res=projects_optimrecipe__(res,lockzeroweights=F, lockzerocurves=F, updateoptimizedparams_abstolperparam=0.0015)
-#OO$subsets='curves'; OO$numrepeats=var_pick(DEVMODE,1,1); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; res=projects_optimrecipe__(res,lockzeroweights=F, lockzerocurves=F, updateoptimizedparams_abstolperparam=0.001)
-# I locked weight gtex_numtissuesgt10tpm_percentile after this step.
-
-
-## [[ 2, 4, 6 ]]
-### Genetic Algorithm with suboptim. Genetic algorithm with a sub-optimization of the top-scoring individual (?) in the population using Nelder-Mead. (poptim = 0.05,pressel=0.5)
-#In Stage2, lockweights:gtex were used.
-#OO$lockweights=csv('gtex_numtissuesgt10tpm_percentile,gtex_maxtpm_nobrain_percentile');
-#OO$lockweights='';
-#OO$methodcontrols$ga=modifyList(OO$methodcontrols$ga, list(optim=T, popSize=var_pick(DEVMODE,5,360), stalerun=20, loadlogpopulation=FALSE, jittersuggestions=0.02));
-#OO$method='ga,Nelder-Mead';  OO$numrepeats=var_pick(DEVMODE,1,3);   cmnt=''; res=projects_optimrecipe__(res)
-
-### [[ (3)? Optional 3rd stage ]]
-## SFS selectnonzeropars (they have been well-established for inclusion). Using suboptim=multipar to identify if any additional features can be included in combination with previous ones.
-#OO$lockzeroweights=F; OO$lockzerocurves=F; OO$methodcontrols$sfs$selectnonzeropars=TRUE; OO$methodcontrols$sfs$locknonzeropars=FALSE;
-#OO$methodcontrols$sfs$suboptim=T; OO$methodcontrols$sfs$osuboptim=list(singlepar=FALSE,jitter=0.01,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.001,0.001),enforcesign=T,maxit=1000,trace=1);
-#OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,20); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; res=projects_optimrecipe__(res);
-
-
-### [[ 5 ]]
-## reverse-elimination
-OO$lockweights=csv('gtex_numtissuesgt10tpm_percentile,gtex_maxtpm_nobrain_percentile');
-OO$lockweights='';
-OO$methodcontrols$sfs=opt_set(OO$methodcontrols$sfs, direction='reverse', suboptim=TRUE, abstol= -0.001); 
-OO$updateoptimizedparams_abstolperparam=0.001
-OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,3); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; 
-OO$methodcontrols$sfs$osuboptim=list(singlepar=FALSE,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.1,0.001),enforcesign=T,maxit=var_pick(DEVMODE,3,100),trace=1,lower=-3,upper=3,jitter=0.01); res=projects_optimrecipe__(res);
-
+res=projects_optim_multistage(ps,optimres=res,devmode=DEVMODE);
 
 
 ### [[ Post-hoc analysis ]]
@@ -150,21 +61,10 @@ OO$methodcontrols$sfs$osuboptim=list(singlepar=FALSE,method="Nelder-Mead",reltol
 
 
 ####################################################
-### [[ 4.5 ]]
-## one-by-one (NOT USED. did not really give any improvement over other optimizaitons)
-#OO$methodcontrols$onebyone=opt_set(OO$methodcontrols$sfs, suboptim=T, abstol=0.001); 
-#OO$updateoptimizedparams_abstolperparam=0.001
-#OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,1); OO$method='onebyone'; OO$softenforceweightsigns=F; cmnt=''; 
-#OO$methodcontrols$onebyone$osuboptim=list(singlepar=TRUE,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.1,0.001),enforcesign=T,maxit=var_pick(DEVMODE,3,100),trace=1,lower=-3,upper=3,jitter=0.05); res=projects_optimrecipe__(res);
 
 
 #OO$method='Nelder-Mead'; OO$softenforceweightsigns=F; cmnt=''; projects_optimrecipe__()
 #OO$method='L-BFGS-B'; OO$softenforceweightsigns=F; cmnt=''; projects_optimrecipe__()
-
-
-## Fix the logfile optimscore values for enforcesign. Also updates the opentarget weight to zero and does any weight-scaling. You need to manually quench the curves if they are larger than you want.
-#y=project_updateoptimizedparams(res=NULL,OO); stopfif(!is.null(y$optimscore),'Remove optimscore from the yaml file before running this. The bestparam file may have been updated in the previous step with no-enforcesign, so its optimscore is not accurate for the next step where we use enforcesign.')
-#OO$method='none'; OO$optimizelogfile=T; OO$removeredundancy=F; cmnt=',recalculate-scores'; projects_optimrecipe__();
 
 
 #stop('end of what we want to run for now.');
@@ -223,8 +123,9 @@ library(ggplot2);
 
 for(folder in csv('sfs.forward,sfs.reverse.withoptim,sfs.reverse.withoutoptim')){
   dg=projects_sfs_summarizeimpact_frommultirun(folder=folder, grouped=T,overwrite=F)
+  dg$datasource[which(dg$datasource == 'expr')]='cancer_exp'
   dg$datasource <- factor(dg$datasource, levels=dg$datasource)
-  g=ggplot(dg, aes(x=datasource,y=impact,fill=datasource)) + geom_bar(stat = 'identity',color='black') + ggtitle(folder) + scale_fill_brewer(palette = 'PRGn') + theme_classic() + ylab("MAP Score Impact") + theme(axis.text.x=element_text(angle = 90, hjust=0.95,vjust=0.2)) + theme(text = element_text(size=14));
+  g=ggplot(dg, aes(x=datasource,y=impact)) + geom_bar(stat = 'identity',color='black', fill='darkgrey') + ggtitle(folder) + theme_classic() + ylab("MAP Score Impact") + theme(axis.text.x=element_text(angle = 90, hjust=0.95,vjust=0.2)) + theme(text = element_text(size=20,family = "Times New Roman"), legend.position = "none") + xlab('') + ggtitle('');
   print(g);
 }
 

@@ -51,7 +51,7 @@ biodb_file=function(dbname,downloadifmissing=T){
 ###############################################################
 biodb_connect=function(dbname,downloadifmissing=T){
   if(!exists('opt_set')){ source_disabled__('util.r'); } 
-  installpackageifmissing("RSQLite")
+  installpackageifmissing(c("RSQLite","DBI"))
   sqlitefile=biodb_file(dbname,downloadifmissing);
   #print(sqlitefile)
   db=DBI::dbConnect(RSQLite::SQLite(),sqlitefile);
@@ -367,6 +367,12 @@ compartmentsdb_getcellsurfacegenes=function(genesymbols){
 #genesymbols input is optional. When not given, we retrieve the entire table.
 gtexdb_getsummary = function(genesymbols){
   return(biodb_query_wheregenesymbols('gtexdb','SELECT * FROM rna_tpm_summary',genesymbols));
+}
+
+
+###############################################################
+gtexdb_geteachtissue = function(genesymbols){
+  return(biodb_query_wheregenesymbols('gtexdb','SELECT * FROM rna_majortissuetpm',genesymbols));
 }
 
 ###############################################################

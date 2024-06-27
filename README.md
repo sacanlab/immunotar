@@ -1,14 +1,14 @@
-# Immunotar
+# ImmunoTar
 
 
 ## Introduction
 
-General introduction. Motivation, goals, features.
+General introduction: Motivation, goals, and features.
 
-To address the challenge of identifying and systematically prioritizing immunotherapeutic targets computationally, we developed IMMUNOTAR. This tool integrates multiple publicly available databases, analyzes cancer expression datasets, and quantitively prioritizes potential targets based on predefined ideal immunotherapeutic target criteria. In addition to adult derived databases, IMMUNOTAR is equipped with pediatric specific databases aiming to aid in identifying pediatric-specific antigens, providing a resource for developing novel therapies in pediatric oncology. 
+To address the challenge of identifying and systematically prioritizing immunotherapeutic targets computationally, we developed ImmunoTar. This tool integrates multiple publicly available databases, analyzes cancer expression datasets, and quantitively prioritizes potential targets based on predefined ideal immunotherapeutic target criteria. In addition to adult derived databases, ImmunoTar is equipped with pediatric specific databases aiming to aid in identifying pediatric-specific antigens, providing a resource for developing novel therapies in pediatric oncology. 
 
 
-The public databases queried within IMMUNOTAR are divided into four categories: normal tissue expression, protein localization, biological annotation, and reagent/therapeutic availability. 
+The public databases queried within ImmunoTar are divided into four categories: normal tissue expression, protein localization, biological annotation, and reagent/therapeutic availability. 
 
 1. Normal tissue experession - GTEx (https://gtexportal.org/home/), Evo-Devo (https://apps.kaessmannlab.org/evodevoapp/), Healthy proteomics map (PMID: 32916130)
 
@@ -16,7 +16,7 @@ The public databases queried within IMMUNOTAR are divided into four categories: 
 
 3. Biological annotation - Gene ontology (GO) (https://geneontology.org/), DepMap (https://depmap.org/portal/)
 
-4. Reagent/therapeutic availability - Therapeutic Target Database (TTD) (https://db.idrblab.net/ttd/), The Database of Antibody-drug Conjugates (ADC-db) (http://adcdb.idrblab.net/)
+4. Reagent/therapeutic availability - Therapeutic Target Database (TTD) (https://db.idrblab.net/ttd/), The Database of Antibody-drug Conjugates (ADC-db) (http://adcdb.idrblab.net/), th Pediatric Molecular Targets List (PMTL) (https://moleculartargets.ccdi.cancer.gov/fda-pmtl)
 
 
 The tool extracts quantitative features from each of these databases to evaluate measured gene candidates against the ideal immunotherapeutic target criteria.
@@ -30,7 +30,7 @@ If you are new to the R programming language, install [R and Rstudio](https://po
 # Devtools will allow us to download/install packages from GitHub.
 install.packages('devtools');
 
-# Install immunotar
+# Install ImmunoTar
 devtools::install_github('sacanlab/immunotar')
 ```
 
@@ -61,6 +61,7 @@ proj = immunotar::project_run(proj)
 
 # Print the top ranking genes:
 head(proj$datawithscore[,'score',drop=F])
+
 ```
 
 
@@ -103,4 +104,13 @@ An immunotar analysis project can have many configurable options. It is convenie
 proj = immunotar::project_run( 'demo_project.yml' )
 
 head(proj$datawithscore[,'score',drop=F])
+```
+
+### Visualization Functions within ImmunoTar
+A few functions within ImmunoTar allow the user to visualize results in heatmaps, rankplots and also allow the user to generate a GUI to manually adjust weights and curve feature values based on their expertise to identify how these feature weights impact the scoring of their known-positive targets. 
+
+```r
+proj = immunotar::project_run( 'demo_project.yml' )
+
+
 ```

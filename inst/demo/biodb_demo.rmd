@@ -81,6 +81,8 @@ source('biodb.r')
 gtexdb_getsummary()[1:10,]
 
 gtexdb_getsummary(c('MEGF10','TP53'))
+
+gtexdb_geteachtissue(c('MEGF10','TP53'))
 ```
 
 ```{r}

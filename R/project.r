@@ -145,18 +145,53 @@ project_reimportdefaultparams=function(p,dir=NULL){
 }
 
 ###############################################################
-#sets p$weightsigns from p$weights. Will call project_runonce if p$weights is not available.
-project_fillweightsigns=function(p,reimportdefaultparams=F,runonce=NULL,warn=T,...){ #keep "...", when we run this in paralllel, we need to have a sink for additional arguments.
+#sets p$defaultweightsigns from p$defaultweights. Will call project_runonce if p$defaultweights is not available.
+project_filldefaultweightsigns=function(p,...){ #keep "...", when we run this in paralllel, we need to have a sink for additional arguments.
   if(!exists('project_reimportdefaultparams')){ source('project.r'); } #this is weird and recursive, but it is to make any parallel workers happy.
+  o=opt_set(list(runonce=NULL,warn=T),...);
+  runonce=o$runonce;
+  warn=o$warn;
 
-  if(var_tobool(runonce)&&!is.null(p[['weightsigns']])){ return(p); }
-  warnfif(warn && is.null(runonce) && !is.null(p[['weightsigns']]),'p$weightsigns is already available. Recalculating them now. Call this function only if p$weightsigns is not available or set warn=F or runonce=T/F to avoid this warning.');
-  if(reimportdefaultparams){ q=project_reimportdefaultparams(p); }
-  else{q=p;}#make a copy so we don't change the original p. We'll only set p$weightsigns before returning.
+  if(var_tobool(runonce)&&!is.null(p[['defaultweightsigns']])){ return(p); }
+  warnfif(warn && is.null(runonce) && !is.null(p[['defaultweightsigns']]),'p$defaultweightsigns is already available. Recalculating them now. Call this function only if p$defaultweightsigns is not available or set warn=F or runonce=T/F to avoid this warning.');
+  q=project_reimportdefaultparams(p);
   if(is.null(q[['weights']])||!project_wasrunbefore(q)){ q=project_runonce(q) }
-  #p$weightsigns = lapply(q[['weights']],sign);
+  p$defaultweights=q$weights;
+  #p$defaultweightsigns = lapply(q[['weights']],sign);
   #let's store the weights as is as weightsigns so we can debug them better. The math we apply later don't require them to be -1,+1.
-  p$weightsigns = q[['weights']];
+  p$defaultweightsigns = q[['weights']];
+  return(p);
+}
+
+###############################################################
+#sets p$weightsigns from p$weights. Will call project_runonce if p$weights is not available.
+project_fillweightsigns=function(p,...){ #keep "...", when we run this in paralllel, we need to have a sink for additional arguments.
+  if(!exists('project_reimportdefaultparams')){ source('project.r'); } #this is weird and recursive, but it is to make any parallel workers happy.
+  o=opt_set(list(usedefaultweightsigns=T,reimportdefaultparams=NULL,runonce=NULL,warn=T),...);
+  usedefaultweightsigns=o$usedefaultweightsigns;
+
+  runonce=o$runonce;
+  warn=o$warn;
+  reimportdefaultparams=o$reimportdefaultparams;
+  #browser();
+  
+  stopfif(!is.null(reimportdefaultparams), 'reimportdefaultparams argument (which had a default FALSE) is no longer used. Use usedefaultweightsigns and runonce=F if you want to reimportdefaultparams.');
+
+  if(usedefaultweightsigns&&var_tobool(runonce)&&!is.null(p[['defaultweightsigns']])){
+      if(!var_equals(p[['weightsigns']],p[['defaultweightsigns']])){ p[['weightsigns']]=p[['defaultweightsigns']]; }
+      return(p);
+  }
+  else if(var_tobool(runonce)&&!is.null(p[['weightsigns']])){ return(p); }
+  warnfif(warn && is.null(runonce) && !is.null(p[['weightsigns']]),'p$weightsigns is already available. Recalculating them now. Call this function only if p$weightsigns is not available or set warn=F or runonce=T/F to avoid this warning.');
+  if(usedefaultweightsigns){
+    p=project_filldefaultweightsigns(p,runonce=runonce,warn=warn); 
+    p$weightsigns=p$defaultweightsigns;
+    return(p);
+  }  
+  if(is.null(p[['weights']])||!project_wasrunbefore(p)){ p=project_runonce(p); }
+  #p$weightsigns = lapply(p[['weights']],sign);
+  #let's store the weights as is as weightsigns so we can debug them better. The math we apply later don't require them to be -1,+1.
+  p$weightsigns = p[['weights']];
   return(p);
 }
 ###############################################################
@@ -200,14 +235,14 @@ project_load=function(yamlfile,loaddatasets=T,dosummarize=T, dorescale=T){
 
   if(!var_tobool(p$didimportfiles)){
     #array_shift optimizedparams and then defaultparams, so they appear in the order defaults,optimized.
-    if(is.null(p$importoptimizedparams)){
-      catf("importoptimizedparams is ON by default. Set the project configuration entry importoptimizedparams=FALSE if you do not want to import them.")
-      p=list_merge(list(importoptimizedparams=T),p);
-    }
     if(is.null(p$importdefaultparams)){
       catf("importdefaultparams is ON by default. Set the project configuration entry importdefaultparams=FALSE if you do not want to import them.")
       #do the import at the beginning, so the project parameters are loaded on top of it.
       p=list_merge(list(importdefaultparams=T),p);
+    }
+    if(is.null(p$importoptimizedparams)){
+      catf("importoptimizedparams is ON by default. Set the project configuration entry importoptimizedparams=FALSE if you do not want to import them.")
+      p=list_merge(list(importoptimizedparams=T),p);
     }
 
     q=list();
@@ -419,6 +454,7 @@ project_rerunifwasrunbefore=function(p,...){
 ###############################################################
 project_optimizedparamsfile=function(...){
   o=opt_set(devmode=F,optimizedparamsfile=NULL,...);
+  if(!isempty(o$optimizedparamsfile)&&o$optimizedparamsfile=='__DEFAULT__'){ o$optimizedparamsfile='project_optimizedparams.yml'; }
   yamlfile=o$optimizedparamsfile;
   if(is.logical(yamlfile)&&!yamlfile){ return(); }
   if(is.null(yamlfile)||is.logical(yamlfile)){
@@ -428,9 +464,24 @@ project_optimizedparamsfile=function(...){
       yamlfile=io_addfilenamesuffix(yamlfile,'.devel');
       if(!io_isfile(yamlfile)){ file.copy(oldyamlfile,yamlfile); }
     }
+    if(yamlfile=='project_optimizedparams.yml'||yamlfile=='project_optimizedparams.devel.yml'){ msgf('project_optimizedparamsfile(): Using %s ...',yamlfile);  }
+    else{ 
+      stopfif(config('project_optimizedparamsfile_stoponconfiguse',default=T),'project_optimizedparamsfile(): Using config(optimizedparamsfile): is currently considered error, so we donot accidentally use an optimizedparams file when a different one should be used. Set config("project_optimizedparamsfile_stoponconfiguse",F) if you want to ignore this error and proceed at your own risk.',yamlfile);
+    }
   }
   yamlfile=getdatafile(yamlfile);
   #stopfif(!grepl('noopentarget',yamlfile),'Unexpected yamlfile %s',yamlfile);
+  #if the file did not exist before, copy over from the default file.
+  if(io_isnotfileorempty(yamlfile)){
+    defaultyamlfile=getdatafile('project_optimizedparams.yml');
+    if(io_isfileandnotempty(defaultyamlfile)){
+      msgf('project_optimizedparamsfile(): Optimizedparamsfile [%s] does not exist. Creating it as a copy from [%s], but wiping the score so it can be recalculated when we run a new optimization.',yamlfile,defaultyamlfile);
+       y=yaml::read_yaml(defaultyamlfile);
+       y['optimscore']=NULL;
+       io_mkfiledirif(yamlfile);
+       yaml::write_yaml(y,yamlfile)
+    }
+  }
   return(yamlfile);
 }
 ###############################################################
@@ -449,6 +500,16 @@ project_optimlogfile=function(...){
     }
   }
   logfile=getdatafile(logfile);
+  #if the file did not exist before, copy over from the default file.
+  if(io_isnotfileorempty(logfile)){
+    defaultlogfile=io_changefileext(project_optimizedparamsfile(optimizedparamsfile='__DEFAULT__'),'.log.xlsx');
+    if(io_isfileandnotempty(defaultlogfile)){
+      msgf('project_optimlogfile(): Optimizedlogfile [%s] does not exist. Creating it as a copy from [%s], but wiping the scores b/c they would not be valid if a new project is being used.',logfile,defaultlogfile);
+      d=data_readfile(defaultlogfile);
+      d[,'optimscore']=NA;
+      data_writefile(d,logfile);
+    }
+  }
   return(logfile);
 }
 
@@ -457,7 +518,7 @@ project_optimlogfile=function(...){
 #by Rawan, Ahmet
 #if r=NULL, we read & return the yamlfile.
 project_updateoptimizedparams=function(res=NULL, ...){
-  o=opt_set(...);
+  o=opt_set(forceupdate=F,...);
   #if all curves are zero, also store it in a nocurve file; only when we are doing auto-filenaming.
   #Update: Curves do matter and we no longer care to store a nocurves version.
   if(FALSE && (is.null(yamlfile)||is.logical(yamlfile)&&yamlfile)&&!is.null(r$curves)&&all(r$curves==0)){
@@ -484,7 +545,7 @@ project_updateoptimizedparams=function(res=NULL, ...){
   y$numnonzerocurves=sum(unlist(y$colcurve)!=0 & unlist(y$colweight)!=0);
   y$numnonzeroparams=y$numnonzeroweights + y$numnonzerocurves;
 
-  update=F; saveacopy=F;
+  update=o$forceupdate; saveacopy=F;
   if(is.null(y$optimscore)){ update=T; }
   
 
@@ -519,6 +580,12 @@ project_updateoptimizedparams=function(res=NULL, ...){
   return(y);
 }
 
+project_getname=function(p){
+  return(var_pickfirstnotnull(p[['projectname']],p[['disease']],'noname'));
+}
+project_getshortname=function(p){
+  return(var_pickfirstnotnull(p[['projectshortname']],p[['projectname']],p[['disease']],'noname'));
+}
 ###############################################################
 #Save log excel file and best weights in YAML file
 #by Rawan, Ahmet
@@ -570,7 +637,10 @@ project_getoptimlogpopulation=function(...){
 	  	if(isempty(o$Iweights)){ wlog=c(); } #o$Iweights is list().
 	  	else{
 	  		stopfif(isempty(o$weights),'If you give Iweights, you must also provide the weights named list so I can resolve the names and put them in the same order.');
-	  		wlog=wlog[,names(o$weights)[o$Iweights],drop=F];
+	  		#browser()
+	  		selectcols=names(o$weights)[o$Iweights];
+	  		wlog[,selectcols[!(selectcols%in%colnames(wlog))]]=0; #add any non-existent columns and set to NA. (which is later modified to 0)
+	  		wlog=wlog[,selectcols,drop=F];
 	  		}
 	  }
 	  else if(!is.null(o$weights)){ wlog=wlog[,names(o$weights)]; }
@@ -824,11 +894,11 @@ project_selectcolsbyweight=function(p,minabsweight=0,bestingroup=F){
 #create plot data structure for use with ggplot.
 #if you feel the need to customize the plot, do so by adding options to the o list below.
 #' @export
-project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ...){
+project_rankplot=function(p, ...){
   if(!exists('opt_set')){ source_disabled__('util.r'); }
   o=opt_set(
-    nudge_x=2 #x/y offset for label of known targets.
-    ,nudge_y=6 #defaults to score-range/20
+    nudge_x=8 #x/y offset for label of known targets.
+    ,nudge_y=10 #defaults to score-range/20
     ,withboxes=T #draw boxes around labels?
     ,knownpositives=p$knownpositives
     ,validatedpositives=p$validatedpositives
@@ -862,11 +932,12 @@ project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ..
   
   
   g=ggplot(dplot, aes(x=rank, y=score)) + geom_point(aes(color=isknowntarget), size=3)+
-    scale_color_manual(values=c('grey', 'springgreen3')) +
+    scale_color_manual(values=c('grey', 'black')) +
     theme_bw() + theme(legend.position = 'none') +
-    theme(text=element_text(size=14, family='Times New Roman'));
+    theme(text=element_text(size=15, family='Arial')) + 
+    ylab('IMMUNOTAR Score') + xlab('Protein Rank');
   if(o$includequantile){
-    g=g+geom_hline(yintercept =as.numeric(quantile(dplot$score, 0.98)), linetype='dashed', color='purple') +
+    g=g+geom_hline(yintercept =as.numeric(quantile(dplot$score, 0.95)), linetype='dashed', color='purple') +
       geom_hline(yintercept =as.numeric(quantile(dplot$score)[2]), linetype='dashed') +
       geom_hline(yintercept = as.numeric(quantile(dplot$score)[3]), linetype='dashed') +
       geom_hline(yintercept = as.numeric(quantile(dplot$score)[4]), linetype='dashed')
@@ -874,9 +945,7 @@ project_rankplot=function(p,validatedpositives=NULL, validatednegatives=NULL, ..
   
   if(is.null(o$nudge_y)){ o$nudge_y=diff(range(dplot$score,na.rm=T))/20; }
   if(!isempty(I)){
-    g=g+geom_label_repel(aes(label=label, fill=dplot$isvalidtarget), max.overlaps = 1500, nudge_x
-                         =o$nudge_x,nudge_y=o$nudgey, family='Times New Roman') + scale_fill_manual(values=c('white', 'cadetblue2',
-                         'tomato1')) + ylab('IMMUNOTAR Score')
+    g=g+geom_label_repel(aes(label=label, fill=dplot$isvalidtarget), max.overlaps = 1000, family='Arial', xlim = c(1, NA)) + scale_fill_manual(values=c('white', 'cadetblue2', 'tomato1')) 
   }
   
   return(g)
@@ -932,35 +1001,41 @@ project_shortenfeaturenames=function(cols,removescaling=T,...){
 
 ########################################################################
 #Selecting features with highest weights from each enrichment dataset 
-project_selectheatmapfeatures=function(p){
+project_selectheatmapfeatures=function(p, medianexp=F, ...){
   features=c()
   f.names=unique(gsub("_.*", "", names(p$weights)))
   for(i in f.names){
     f=names(which.max(abs(unlist(p$weights[grepl(i,names(p$weights))]))))
     features=c(features,f)
   }
+  if(medianexp){
+    features=features[-grepl('expr', features)]
+    features=c(names(p$weights)[grepl('expr_median', names(p$weights))], features)
+  }
   return(features)
 }
 
 ###############################################################
-#Heatmap of IMMUNOTAR features
+#Heatmap of ImmunoTar features
 # by Rawan
 #rows: which rows to show. defaults to 1:10
 #colnames: which columns to show. will default to some pre-selected columns that we like showing.
 #withexprcol:  if true, we add expr_mean_* column to colnames.
 #any additional arguments are passed into ComplexHeatmap::pheatmap
 #' @export
-project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='Feature\nValue\n', ...){
+project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, medianexp=F, legendtitle='Feature\nValue\n', ...){
   o=opt_set(
     markgenesby=NULL #use one or more p fields. e.g., use 'knownpositives'
     ,imgfile=NULL #if given, we'll save the plot into that file.
+    ,title=NULL
+    ,cluster_r=F
     ,...
   )
   p=project_runonce(p);
   d=p$datawithscore;
   if(is.null(cols)){
     dbg_warnf('No specific features selected to plot, using features with the highest weights within each enrichment database')
-    cols=project_selectheatmapfeatures(p)
+    cols=project_selectheatmapfeatures(p, medianexp=medianexp, ...)
     #If we need it to be cancer specific add 
     if(!withexprcol){
       cols=cols[-grep('expr|depmap|GO', cols)]
@@ -1002,14 +1077,17 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
   #ht_opt$heatmap_column_names_gp= grid::gpar(fontsize = 20)
   colnames(d)[which(colnames(d) == 'opentargetsurface')]='PMTLSurface'
   colnames(d)[which(colnames(d) == 'expr')]='cancer_expr'
-  h=ComplexHeatmap::pheatmap(d,fontsize=15,show_rownames=T, show_colnames = T, treeheight_row = 0,
-                             treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
+  h=ComplexHeatmap::pheatmap(d,fontsize=10,show_rownames=T, show_colnames = T, treeheight_row = 0,
+                             treeheight_col = 0, cluster_cols = F, cluster_rows = o$cluster_r, 
                              color = col, na_col = 'grey', border_color = 'white', 
-                             cellwidth = 25, cellheight =15, fontfamily = 'Times',fontsize_col = 15,
-                             fontsize_row = 15,
+                             cellwidth = 20, cellheight =10, fontsize_col = 10,
+                             fontsize_row = 9, main = o$title,
                              heatmap_legend_param = list(title = legendtitle, 
-                                                         title_gp= grid::gpar(fontsize = 15, fontfamily='Times'),
-                                                         labels_gp = grid::gpar(fontsize = 15, fontfamily='Times')))
+                                                         title_gp= grid::gpar(fontsize = 10, y=10, x=10),
+                                                         labels_gp = grid::gpar(fontsize = 10),
+                                                         title_position = "topcenter", # Title position to avoid overlapping
+                                                         labels_position = "left"
+                                                        ))
   
   
   o$markgenesby=csv(o$markgenesby);
@@ -1020,25 +1098,24 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F,legendtitle='
     if(!length(I)){ next; }
     pch=rep(NA,nrow(d));
     pch[I]=20; #this is just the marker style. google pch style.
-    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 15, fontfamily='Times'), pt_gp = grid::gpar(fontsize = 15,fontfamily='Times')))
+    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 10, fontfamily='Arial'), pt_gp = grid::gpar(fontsize = 10,fontfamily='Arial')))
     if(by=='opentarget'){by='PMTL'}
     if(by=='curated'){by='Validated'}
     an@anno_list$NEEDTOCHANGE@label=by; #I couldn't change the name of the annot without this hack.
     h=h+an
   }
   if(!isempty(o$markgenesby)){ #adding right-annotations mess up the labels and we have to reannotate here.
-    print(h)
-    print(colnames(d))
-    print(rownames(d))
-    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d), gp = grid::gpar(fontsize = 15, fontfamily='Times')))  
+
+    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d), gp = grid::gpar(fontsize = 10, fontfamily='Arial')))  
    
     #,location = unit(0, "npc"), just = "left"))
 
   }
   
+  
   fig_export(h,o);
   
-  return(h)
+  return(ComplexHeatmap::draw(h, heatmap_legend_side = "right", padding = grid::unit(c(2, 10, 2, 2), "pt")))
 }
 
 
@@ -1066,6 +1143,57 @@ fig_export=function(h,...){
     }
   }
   return(o$imgfile);
+}
+
+project_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='Gene\nscore\n '){
+  s=projects_summarizeresults(ps)
+  
+  if(is.null(rows)){
+    dbg_warnf('No specific genes given to plot, using the top 10 average scoring genes
+                across all projects')
+    rows=1:10
+  }
+  
+  avg=s[rows,"Average_score", drop=F]
+  s$Average_score=NULL
+  plot=s[rows,]
+  p.known=matrix(nrow=nrow(plot), ncol=ncol(plot))
+  
+  for(i in 1:ncol(plot)){
+    knowntar.disease=paste0(ps[[i]]$disease, '_',ps[[i]]$knownpositives__)
+    c=paste0(colnames(plot)[i], '_', rownames(plot))
+    r.ind=which(c %in% knowntar.disease)
+    p.known[r.ind,i]='*'
+  }
+  
+  p.known[which(is.na(p.known))]=''
+  rownames(p.known)=rownames(plot)
+  colnames(p.known)=colnames(plot)
+  map=pancancer_diseasemap()
+  
+  for(i in 1:ncol(plot)){
+    colnames(plot)[i]=map[[which(names(map) == colnames(plot)[i])]]$short
+    colnames(p.known)[i]=map[[which(names(map) == colnames(p.known)[i])]]$short
+  }
+  
+  plot=plot[,levels]
+  p.known=p.known[,levels]
+  plot=cbind(plot,avg)
+  p.known=cbind(p.known,'')
+  col = RColorBrewer::brewer.pal(name = "Blues", n = 5)
+  ComplexHeatmap::pheatmap(plot,fontsize=12, show_rownames=T, 
+                           show_colnames = T, treeheight_row = 0,
+                           treeheight_col = 0, cluster_cols = F, cluster_rows = F, 
+                           color = col, na_col = 'grey', 
+                           border_color ='white', 
+                           cellwidth = 25, cellheight =15, 
+                           display_numbers = as.matrix(p.known),
+                           fontsize_number = 15, fontfamily = 'Times', number_color = 'black', 
+                           
+                           heatmap_legend_param = list(title = legendtitle, 
+                                                       title_gp= grid::gpar(fontsize = 12,fontfamily='Times'),
+                                                       labels_gp = grid::gpar(fontsize = 12, fontfamily='Times')))
+  
 }
 
 

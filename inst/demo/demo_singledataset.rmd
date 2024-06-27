@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
+rm(list=ls())
 source('util.r')
 source('project.r'); source('config.r')
 
@@ -23,4 +24,12 @@ p$data
 
 ```{r}
 project_rankplot(p)
+
+p=project_run('demo_project.yml')
+
+p$datawithscore[1:10,]
+
+project_resultheatmap(p, withexprcol = F, markgenesby=csv('knownpositives'), nc=2)
+
+
 ```

@@ -120,42 +120,96 @@ DEVMODE=F
 
 ps.default=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile="project_defaultparams.yml")
 
-mean(unlist(lists_extractfield(ps.default, 'rankeval')))
+#ps.rs=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile="project_optimizedparams2.yml")
 
-#this is Ahmets final optimization 
-ps.as=pancancer_pediatricprojects(devmode=DEVMODE)
+ps.nbl=pancancer_pediatricprojects(devmode=DEVMODE,optimizedparamsfile="project_optimizedparams_nbl.yml")
+
+
+#final optimization
+ps.as=pancancer_pediatricprojects(devmode=DEVMODE, optimizedparamsfile="project_optimizedparams.yml")
+
+
+mean(unlist(lists_extractfield(ps.default, 'rankeval')))
+mean(unlist(lists_extractfield(ps.as, 'rankeval')))
+mean(unlist(lists_extractfield(ps.nbl, 'rankeval')))
+
+ps.as[[1]]$theratardisease
+
+diseases=unlist(lists_extractfield(ps.as, 'theratardisease'))
+drugdatases=c()
+
+for(i in 1:length(diseases)){
+  db=theratardb_disease2genesymbols(diseases[i])
+  drugdatases=rbind(drugdatases, db)
+}
+
+nps=unlist(lists_extractfield(ps.as, 'knownpositives__'))
+
+mmnp=c('ITGA4', 'ITGB7', 'FLVCR1', 'LY75', 'TNFRSF8', 'IGF1R')
+
+nps[which(nps %in% mmnp)]
 
 ps.as[[1]]$datawithscore
-
 
 res_list=list()
 
-for(i in 1:length(ps.as)){
-  res_list[[i]]=ps.as[[i]]$datawithscore
+for(i in 1:length(ps.rs)){
+  res_list[[i]]=ps.rs[[i]]$datawithscore
 }
 
-disease=unlist(lists_extractfield(ps.as, 'disease'))
+for(i in 1:length(ps.nbl)){
+  res_list[[i]]=ps.nbl[[i]]$datawithscore
+}
+
+disease=unlist(lists_extractfield(ps.nbl, 'disease'))
 
 names(res_list)=disease
 
-openxlsx::write.xlsx(res_list, "../doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/Supplemental_tables_results.xlsx", rowNames=T)
+openxlsx::write.xlsx(res_list, "../doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/Supplemental_tables_results_modified.xlsx", rowNames=T)
 
+openxlsx::write.xlsx(res_list, "../doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/Multicancer_results_nbloptimization.xlsx", rowNames=T)
 
-ps.as[[1]]$datawithscore
 mean(unlist(lists_extractfield(ps.as, 'rankeval')))/
 mean(unlist(lists_extractfield(ps.default, 'rankeval')))
 
 level_order=csv('NSCLC,AML,ML,BLL,TLL,BL,T-ALL,NBL,OS,ES,B-ALL,RMS')
+level_order1=csv('AML,BLL,TLL,BL,T-ALL,B-ALL')
+level_order2=csv('NSCLC,ML,NBL,OS,ES,RMS')
 
 summary_score2=projects_summarizeresults(ps.as)
+
+ps.rs_hem=ps.rs[c(1:4,11,12)]
+ps.rs.solid=ps.rs[c(5:10)]
+
+ps.as_hem=ps.as[c(1:4,11,12)]
+ps.as.solid=ps.as[c(5:10)]
+
 projects_heatmap_scores(ps.op, levels = level_order )
 projects_heatmap_scores(ps.as, levels = level_order )
+projects_heatmap_scores(ps.rs, levels = level_order )
+
+projects_heatmap_scores(ps.rs_hem, levels = level_order1)
+projects_heatmap_scores(ps.rs.solid, levels = level_order2)
+
+projects_heatmap_scores(ps.as_hem, levels = level_order1)
+projects_heatmap_scores(ps.as.solid, levels = level_order2)
+
+for(i in 1:length(ps.as)){
+  print(project_resultheatmap(ps.as[[i]], markgenesby='knownpositives', title=ps.as[[i]]$disease))
+}
+
+project_resultheatmap(ps.as[[1]], markgenesby='knownpositives', title=ps.as[[1]]$disease) 
+project_resultheatmap(ps.as[[2]], markgenesby='knownpositives', title=ps.as[[2]]$disease) 
+
 
 project_resultheatmap(ps.op[[1]], rows=rownames(summary_score1)[1:10], nc=1)
 project_resultheatmap(ps.as[[1]], rows=rownames(summary_score2)[1:10], nc=1)
+```
 
 
-plot_mapscores=function(ps.optimized, ps.default){
+```{r}
+
+plot_mapscores=function(ps.optimized, ps.default, col1_name='default', col2_name='optimized'){
   map=pancancer_diseasemap()
   plot.map=data.frame()
   for(i in 1:length(ps.optimized)){
@@ -167,9 +221,10 @@ plot_mapscores=function(ps.optimized, ps.default){
     plot.map=rbind(plot.map, new_r)
   }
 
-  colnames(plot.map)=c('phenotype', 'default_MAP', 'optimized_MAP', 'perc_optimized_MAP')
+  colnames(plot.map)=c('phenotype', col1_name, col2_name, 'perc_optimized_MAP')
   plot.map=reshape2::melt(plot.map, id.var='phenotype')
   plot.map$value=as.numeric(plot.map$value)
+  plot.map$value=plot.map$value*100
   
   g=ggplot2::ggplot(plot.map[which(plot.map$variable != 'perc_optimized_MAP'),], 
                   ggplot2::aes(x=factor(phenotype, level=level_order),y=value, fill=variable)) + 
@@ -177,27 +232,100 @@ plot_mapscores=function(ps.optimized, ps.default){
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 90, size = 12, hjust=0.95,vjust=0.2)) + 
     ggplot2::theme(text = ggplot2::element_text(size=20, family = "Times New Roman")) + 
     ggplot2::scale_fill_manual(values=c('grey', 'black'))+
-    ggplot2::xlab('') + ggplot2::ylab('MAP Score') + ggplot2::labs(fill='MAP scores')
+    ggplot2::xlab('') + ggplot2::ylab('MAP Score (%)') + ggplot2::labs(fill='MAP scores')
   print(g)
   
   return(plot.map)
 
 }
 
-plot_mapscores(ps.op, ps.default)
+diseases=c('ml', 'nbl', 'aml', 'bll', 'b-all', 'bl', 'nsclc', 'os', 'rms', 'tll', 'es', 't-all')
+
+phenotypes_optim=c()
+for(i in 1:length(diseases)){
+  optimfile=yaml::read_yaml(paste0('../data/', diseases[i], '_optimization/','project_optimizedparams_',diseases[i], '.yml'))
+  pheno_optim=c(diseases[i], optimfile$optimscore)
+  phenotypes_optim=rbind(phenotypes_optim, pheno_optim)
+  
+}
+
+phenotypes_optim=as.data.frame(phenotypes_optim)
+
+phenotypes_optim$V1=toupper(phenotypes_optim$V1)
+
+phenotypes_optim$variable='pheno_optim'
+
+colnames(phenotypes_optim)[1:2]=c('phenotype', 'value')
+rownames(phenotypes_optim)=NULL
+
+phenotypes_optim=phenotypes_optim[,c(1,3,2)]
+phenotypes_optim$value=as.numeric(phenotypes_optim$value)*100
+
+mapscore.op=plot_mapscores(ps.as, ps.default)
+
+mapscore.op=rbind(mapscore.op, phenotypes_optim)
+
+mapscore.op=mapscore.op[-which(mapscore.op$variable == 'perc_optimized_MAP'),]
+
+
+ggplot2::ggplot(mapscore.op, ggplot2::aes(x=factor(phenotype, level=level_order),y=value, fill=variable)) + 
+    ggplot2::geom_bar(stat = 'identity', position=ggplot2::position_dodge()) + ggplot2::theme_bw() + 
+    ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 90, size = 12, hjust=0.95,vjust=0.2)) + 
+    ggplot2::theme(text = ggplot2::element_text(size=20, family = "Times New Roman")) + 
+    ggplot2::scale_fill_manual(values=c('grey', 'black', 'blue'))+
+    ggplot2::xlab('') + ggplot2::ylab('MAP Score (%)') + ggplot2::labs(fill='MAP scores')
+
+mapscore.rs=plot_mapscores(ps.rs, ps.default)
+
 mapsummary=plot_mapscores(ps.as, ps.default)
+
+mapsummary=plot_mapscores(ps.nbl, ps.as, 'multi_cancer_optim', 'nbl_optim')
 
 mapsummary=mapsummary[mapsummary$variable != 'perc_optimized_MAP',]
 
 mapsummary2=reshape(mapsummary, idvar = "phenotype", timevar = "variable", direction = "wide")
 wilcox.test(mapsummary2$value.default_MAP, mapsummary2$value.optimized_MAP)
-
 ```
 
 
 ```{r }
 source('projects.r'); source('project.r'); source('pancancer.r')
 projects_getnames(ps.op)
+aml.rs=ps.rs[[1]]$datawithscore
+ball.rs=ps.rs[[2]]$datawithscore
+bll.rs=ps.rs[[3]]$datawithscore
+bl.rs=ps.rs[[4]]$datawithscore
+es.rs=ps.rs[[5]]$datawithscore
+ml.rs=ps.rs[[6]]$datawithscore
+nbl=ps.nbl[[7]]$datawithscore
+
+nbl$Genes=rownames(nbl)
+
+writexl::write_xlsx(nbl, "../datasets/pancancer_dataset/NBL_IMMUNOTARScore_NBLOptimization_05.01.2024.xlsx")
+project_rankplot(ps.nbl[[7]], knownpositives=c('ALK', 'GPC2', 'CD276','GFRA2', 'L1CAM', 'DLK1'), validtargets=c('ALK', 'GPC2', 'CD276','GFRA2', 'L1CAM', 'DLK1'), includequantile=T)
+
+project_rankplot(ps.as[[7]], knownpositives=c('ALK', 'GPC2', 'CD276','GFRA2', 'L1CAM', 'DLK1'), validtargets=c('ALK', 'GPC2', 'CD276','GFRA2', 'L1CAM', 'DLK1'), includequantile=T)
+
+nbl_weighted.rs=ps.rs[[7]]$weighteddata
+nbl_raw=ps.rs[[7]]$dataraw
+nbl_weighted.rs=nbl_weighted.rs[rownames(nbl.rs),]
+nbl_raw=nbl_raw[rownames(nbl.rs),]
+
+write.csv(nbl_weighted.rs, file='~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/weightedNBL.rs2_pancancer.csv', row.names = T, quote = F)
+
+which(rownames(nbl.rs) %in% c("GPC2", "GFRA2", "L1CAM", "CD276"))
+which(rownames(nbl.rs) %in% c("ACE", "PTPRC"))
+
+
+nsclc.rs=ps.rs[[8]]$datawithscore
+os.rs=ps.rs[[9]]$datawithscore
+rms.rs=ps.rs[[10]]$datawithscore
+rms.weighted=ps.rs[[10]]$weighteddata
+rms.weighted=rms.weighted[rownames(rms),]
+tall.rs=ps.rs[[11]]$datawithscore
+tll.rs=ps.rs[[12]]$datawithscore
+
+ps.rs[[1]]$weights
 
 aml=ps.as[[1]]$datawithscore
 ball=ps.as[[2]]$datawithscore
@@ -206,14 +334,16 @@ bl=ps.as[[4]]$datawithscore
 es=ps.as[[5]]$datawithscore
 ml=ps.as[[6]]$datawithscore
 nbl=ps.as[[7]]$datawithscore
+nbl_weighted=ps.as[[7]]$weighteddata
+ps.as[[7]]$knownpositives__
+which(rownames(nbl) %in% c("GPC2", "GFRA2", "L1CAM", "CD276"))
+nbl_weighted=nbl_weighted[rownames(nbl),]
+write.csv(nbl_weighted, file='~/Library/CloudStorage/Box-Box/Rawan/RMS PhD Project/RMS_DIA/Code/doc/IMMUNOTAR_SHRAIM_20230111.manuscript/Supplemental files/weightedNBL_pancancer.csv', row.names = T, quote = F)
 nsclc=ps.as[[8]]$datawithscore
 os=ps.as[[9]]$datawithscore
 rms=ps.as[[10]]$datawithscore
 tall=ps.as[[11]]$datawithscore
 tll=ps.as[[12]]$datawithscore
-
-ps.as[[7]]$rankeval
-ps.as[[2]]$rankeval
 
 ```
 

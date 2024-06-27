@@ -24,7 +24,7 @@ theratardb_searchdisease = function(queries,exact=FALSE,where=''){
 theratardb_moas = function(){
   ss=biodb_query('theratardb','SELECT DISTINCT(moas) FROM gene_disease');
   #print(ss);
-  source_disabled__('util.r')
+  #source('util.r')
   ss=sort(unique(arr_csv(str_csv(ss[['moas']]))));
   return(ss);
 

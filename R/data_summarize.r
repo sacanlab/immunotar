@@ -24,7 +24,6 @@ data_summarize=function(d, ...){
     ,cols='__NUMERIC__' #%if non-empty, we only apply to these columns. Can bee a list of column names or a logical/numerical index for columns. or '__NUMERIC__' to only use numeric columns.
   , ...);
   
-  
   types=ensurecsvlist(o$summarytypes,alltypes)
   if(length(types)==0) return(d); #no summarization done.
 
@@ -62,7 +61,7 @@ data_summarize=function(d, ...){
         msgf('data_summarize(): expressedthreshold defaulted to "0ormin". We will use 0 if all data is positive, or the smallest value if it is not. You can explicitly set expressedthreshold to avoid this warning.');
       }
     }
-    if(is.na(o$expressedthreshold)){ out$numexpressed=rowSums(is.na(m)); }
+    if(is.na(o$expressedthreshold)){ out$numexpressed=rowSums(!is.na(m)); }
     else{
       if(o$expressedthreshold=='0ormin'){ o$expressedthreshold=var_pick(hasnegative(m), min(m), 0); }
       if(o$expressedthreshold&&hasnegative(m)){ warnf('data_summarize(): The threshold of expression (for counting "numexpressed") is zero, but your data has negative values. numexpressed summary is invalid/unreliable.'); }

@@ -8,7 +8,7 @@ source_disabled__('enrich.r');
 data_enrich=function(d, o=list()){
   if(is.character(o)) o=list(enrichtypes=o);
   #alltypes=unlist(strsplit('gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentarget,opentargetsurface,theratarsurface',','));
-  alltypes=unlist(strsplit('gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface',','));
+  alltypes=unlist(strsplit('gtex,gtextissue,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface',','));
   #only include depmap in the default alltypes if depmapids is provided
   if(!is.null(o$depmapids)) alltypes=c(alltypes,'depmap');
   #only include go in the default alltypes if goids is provided

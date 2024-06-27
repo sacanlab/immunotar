@@ -70,7 +70,9 @@ dataset_load=function(dset, ...){
 		source_disabled__('data_enrich.r')
 		cat('Enriching with additional information. This may take a while...\n')
 		dset$data=data_enrich(dset$data,oenrich);
-    dset$didenrich=T;
+    dset$didenrich=T
+		#Rawan added this 04.21.24
+		dset$dataraw=dset$data;
 	}
 
   if((is.null(dset$dohandlenan)&&!is.null(dset$handlenan) || !is.null(dset$dohandlenan)&&dset$dohandlenan) && (is.null(dset$didhandlenan)||!dset$didhandlenan)){

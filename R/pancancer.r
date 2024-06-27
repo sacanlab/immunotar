@@ -145,6 +145,7 @@ pancancer_getcancerdatafile=function(cancername,...){
   meta=pancancer_getmetadata();
   if(o$onlypediatric){ meta=meta[meta$ispediatric,]; }
   I=meta$cancer_type %in% cancername;
+  #if(!any(I)){    browser();  }
   stopfif(!any(I),'Requested cancername [%s] is not found among the cancer_types.',cancername);
   meta=meta[I,];
   d=pancancer_getalldata();
@@ -267,19 +268,28 @@ pancancer_project=function(cancername,...){
     ,datafile=NULL #when not given, we'll use pancancer_getcancerdatafile().
     ,immunoadd=0  # whether to artifically inflate theratar targets that are immunotherapy-related. (suggested value: 10)
     ,onlysurfacetargets=T
+    ,knownscores=NULL #datatable with rownames genes and score column containing positive  values (or negative values for knownnegative targets). if we given, we'll use it; if not given, we use theratardb. If you use your own knownscores, you may want to set onlysurfacetargets=F if you don't want the non-surface proteins in your knownscores to be removed.
+    ,projectname=NULL #defaults to cancername.
+    ,projectshortname=NULL #defaults to pancancer_shortname_map(cancername)
+    ,withgtextissues=F #whether to use gtex-per-tissue enrichment type.
+    ,importfile=NULL
   ,...)
   if(isempty(o$datafile)){
     o$datafile=pancancer_getcancerdatafile(cancername,o);
   }
-  
   theratardisease=pancancer_theratar_map(cancername=cancername);
-  dthera=theratardb_disease2genesymbols(theratardisease,asframe=c('genesymbol','higheststatus_'),immunoadd=o$immunoadd);
-  dthera = data_combineduplicaterows( dthera, idcolumn='genesymbol', func=max ) #there is a slight problem here when we are dealing with negative status scores, but we'll ignore it. Ideally, we would use absmax() for negative scores, but keep max() if there is a positive version of a gene.
-  rownames(dthera)=dthera$genesymbol;
-  dthera=dthera[,'higheststatus_',drop=F]; colnames(dthera)='score';
-  dtherapos=dthera[dthera$score>0,,drop=F];
-  dtheraneg=dthera[dthera$score<0,,drop=F];
-  if(!isempty(dtherapos)&&o$onlysurfacetargets){ dtherapos=getsurfacegenes(dtherapos); } #only the positive are filtered. leave negatives as negative, even if they are not surface proteins.
+
+  knownscores=o[['knownscores']];
+  if(is.null(knownscores)){
+    dthera=theratardb_disease2genesymbols(theratardisease,asframe=c('genesymbol','higheststatus_'),immunoadd=o$immunoadd);
+    dthera = data_combineduplicaterows( dthera, idcolumn='genesymbol', func=max ) #there is a slight problem here when we are dealing with negative status scores, but we'll ignore it. Ideally, we would use absmax() for negative scores, but keep max() if there is a positive version of a gene.
+    rownames(dthera)=dthera$genesymbol;
+    dthera=dthera[,'higheststatus_',drop=F]; colnames(dthera)='score';      
+    knownscores=dthera;
+  }
+  knownscores_pos=knownscores[knownscores$score>0,,drop=F];
+  knownscores_neg=knownscores[knownscores$score<0,,drop=F];
+  if(!isempty(knownscores_pos)&&o$onlysurfacetargets){ knownscores_pos=getsurfacegenes(knownscores_pos); } #only the positive are filtered. leave negatives as negative, even if they are not surface proteins.
 
   depmapdisease=pancancer_depmap_map(cancername=cancername);
   ddepmap=depmapdb_searchsamples(depmapdisease,searchinfields=c("primarydisease","subtype"));
@@ -290,21 +300,23 @@ pancancer_project=function(cancername,...){
     ,importdefaultparams=o$importdefaultparams
     ,importoptimizedparams=o$importoptimizedparams
     ,enrich=list(
-      enrichtypes='gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,depmap,opentargetsurface'
+      enrichtypes=paste0('gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,depmap,opentargetsurface',var_pick(o$withgtextissues,',gtextissue',''))
       ,depmapids=depmapids
     )
     #ahmet: I turned off this default weight
     #,weight = 1 #DISCUSS: Do not set a global weight for a project, otherwise we may miss spelling mistakes, etc. (e.g., opentargetsurface vs. opentargetsurface)
     ,getfull=T
     #these are not required by project-run, but useful for annotation/reports.
+    ,projectname=var_pickfirstnotnull(o$projectname,cancername)
+    ,projectshortname=var_pickfirstnotnull(o$projecshorttname,pancancer_shortname_map(cancername))
     ,disease=cancername 
     ,theratardisease=theratardisease
-    ,knownscores=dthera
-    ,knownpositives=rownames(dtherapos)
-    ,knownnegatives=rownames(dtheraneg)
-    ,numknownpositives=nrow(dtherapos)
-    ,knownpositivescores=dtherapos
-    ,knownnegativescores=dtheraneg
+    ,knownscores=knownscores
+    ,knownpositives=rownames(knownscores_pos)
+    ,knownnegatives=rownames(knownscores_neg)
+    ,numknownpositives=nrow(knownscores_pos)
+    ,knownpositivescores=knownscores_pos
+    ,knownnegativescores=knownscores_neg
     ,depmapdisease=depmapdisease
     ,devmode=o$devmode
     ,randid=str_rand(32) #randomid used in projects_setupcluster() to tell if the current project list is the same as the one that was exported previously.
@@ -319,6 +331,20 @@ pancancer_project=function(cancername,...){
   
   return(p)
 }
+
+pancancer_customproject_neuroblastoma=function(...){
+    knownscores=data.frame(score=c(12,12,6.5,6.5,5,5))
+    rownames(knownscores)=c('ALK', 'GPC2', 'CD276','GFRA2', 'L1CAM', 'DLK1');
+    return(pancancer_project('Neuroblastoma',...,knownscores=knownscores));
+}
+
+pancancer_customproject_ewing=function(...){
+  knownscores=data.frame(score=c(12,12,12,12,12,12,12,12,12,6,6,1))
+  rownames(knownscores)=c('IL1RAP', 'ATP11C', 'STEAP2','ADGRG2','ENPP1','CDH11','STEAP1','LINGO1','SLCO5A1','CD99', 'ROR1', 'ENG');
+  return(ewingmm_project("Ewing's Sarcoma",knownscores=knownscores, ...));
+}
+
+
 
 ########################################################################
 #cancernames will default to pancancer_getcancerlist(...)
@@ -336,7 +362,7 @@ pancancer_projects=function(cancernames=NULL,...){
   ,...)
 
   o$optimizedparamsfile=project_optimizedparamsfile(...); #need to have the optimizedparamsfile listed in o, so a different cachefile is used for different optimizedparams files.
-  ocache=cache_opts(list_removefields(o,'doparallel'),depends=c(pancancer_file('meta'),pancancer_file('protein_averaged'), time_numeric('2024-02-29 15:00:00')));
+  ocache=cache_opts(list_removefields(o,'doparallel'),depends=c(pancancer_file('meta'),pancancer_file('protein_averaged'), time_numeric('2024-05-03 23:17:00')));
   if(!ocache$recache){
     msgf('Loading projects from cachefile [%s]  ...',ocache$cachefile);
     ps=cache_load(ocache);
@@ -365,8 +391,7 @@ pancancer_projects=function(cancernames=NULL,...){
       msgf('Preparing the projects. This may take a while...')
       if(!exists('projects_prepare')){ source_disabled__('projects.r'); }
       ps=projects_prepare(ps,doparallel=o$doparallel);
-      
-      #After project_prepare,  numknownpositives__ (that also exist in project$data frame) becomes available.
+
       if(o$minknownpositives>0){
         I=lists_extractfield(ps,'numknownpositives__')>=o$minknownpositives;
         ps=ps[I];
@@ -374,7 +399,7 @@ pancancer_projects=function(cancernames=NULL,...){
     }
     
     if(o$run){
-      ps=projects_fillweightsigns(ps,reimportdefaultparams=T,doparallel=o$doparallel);
+      ps=projects_fillweightsigns(ps,o,doparallel=o$doparallel);
       ps=projects_run(ps,doparallel=o$doparallel);
     }
     

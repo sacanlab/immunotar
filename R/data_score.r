@@ -49,6 +49,7 @@ data_score=function(d,...){
     Wtotal = sum(abs(W));
     mW = sweep(m, MARGIN=2, W, `*`) #https://stackoverflow.com/questions/3643555/multiply-rows-of-matrix-by-vector
     score = rowSums(mW) / Wtotal;
+    #score2=rowSums(mW)/length(which(W >0))
     #TODO: (Discuss) Rawan changed the score vector because it was not producing the score. 
     #TODO: Ahmet says: I don't know why the following line is needed.
     #mW$score=score
@@ -66,10 +67,8 @@ data_score=function(d,...){
   if(o$getfull||!is.null(o$outfile)){
     if('score' %in% colnames(d)){ warnf('data already has a column named [score]. The score column will be overridden here. You probably should have removed that column becore calling data_score(), otherwise the old score column may be used for calculation of the new score column.'); }
     dwithscore = d;
-    if(length(score)!=nrow(d)){
-      2+2;
-    }
     dwithscore$score = score;
+    #dwithscore$score2=score2
     #make score the first column:
     dwithscore=dwithscore[,c(which(colnames(dwithscore) %in% c('score')), which(!colnames(dwithscore)%in% c('score') ))];
     installpackageifmissing('data.table')

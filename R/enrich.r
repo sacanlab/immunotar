@@ -36,6 +36,13 @@ enrich_gtex = function(d){
 }
 
 ###############################################################
+# Adds median TPM value of each gene for each tissue surveyed in GTEx
+
+enrich_gtextissue = function(d){
+  return( enrich_merge(d, gtexdb_geteachtissue(rownames(d)), 'gtextissue_') );
+}
+
+###############################################################
 # Adds max RPKM value of each gene across all tissues surveyed in Evo devo
 
 enrich_evodevo_pediatric = function(d){

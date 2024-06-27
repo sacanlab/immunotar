@@ -19,6 +19,8 @@ ewingmm_downloadfiles=function(disease,...){
     sheetname='RelAbundance_Surface'
   }else{sheetname=NULL}
   
+  #TODO: use data_readfile() instead.
+  installpackageifmissing('readxl');
   d=readxl::read_xlsx(file, sheet = sheetname)
   
   if(disease=="Ewing's Sarcoma"){
@@ -53,6 +55,8 @@ ewingmm_downloadfiles=function(disease,...){
     df[,2:ncol(df)]=2^df[,2:ncol(df)]
   }
 
+  #TODO: use data_writefile() instead.
+  installpackageifmissing('writexl')
   writexl::write_xlsx(df, filename)
   return(filename)
 }
@@ -68,7 +72,7 @@ ewingmm_project=function(diseasename,...){
     p=project_cache_updateifneeded(p,ocache,o);
     return(p);
   }
-  p=pancancer_project(cancername=diseasename, datafile=datafile,o)
+  p=pancancer_project(cancername=diseasename, datafile=datafile,o,...)
   p=project_run(p);
   cache_save(p,ocache);
   return(p);
@@ -100,7 +104,7 @@ ewingmm_ssgsea=function(ps=NULL,...){
     ps=list(e, m)
   }
   
-  rows=csv('validatedpositives,knownpositives__,opentarget,curated')
+  rows=csv('validatedpositives,curated,ttd_adc')
   res=data.frame(matrix(nrow = length(rows)))
   for(p in ps){
       p.score=data.frame()

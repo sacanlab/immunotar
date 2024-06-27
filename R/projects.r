@@ -77,6 +77,14 @@ projects_fillweightsigns=function(ps,...){
 	return(ps);
 }
 ###############################################################
+projects_filldefaultweightsigns=function(ps,...){
+	o=opt_set(...);
+	if(!exists('project_filldefaultweightsigns')){ source_disabled__('project.r'); }
+	if(is.namedlist(ps)){ ps=list(ps); }
+	ps = list_map(ps,project_filldefaultweightsigns,o,...)
+	return(ps);
+}
+###############################################################
 
 #projects may have different columns. use this to get a merged list of weights.
 #you must call projects_runonce() before calling this function.
@@ -89,7 +97,7 @@ projects_getweightsandcurves=function(ps,o=list()){
 	),o);
 	if(!isempty(o[['weights']])&&!isempty(o$weightsigns)&&!isempty(o$curves)){ return(o[c('weights','weightsigns','curves')]); }
 	
-	ps=projects_fillweightsigns(ps,runonce=T,reimportdefaultparams=F);
+	ps=projects_fillweightsigns(ps,o,runonce=T);
 	
 	weights=data.frame(); weightsigns=data.frame(); curves=data.frame();
 	for(pi in 1:length(ps)){
@@ -112,6 +120,12 @@ projects_getweightsandcurves=function(ps,o=list()){
 			else{ o$weightsigns[[colnames(weightsigns)[[ci]]]]=0; } #when different projects have different signs, set the sign to 0.
 		}
 	}
+	#make sure there is a weightsign for every weight (which is sometimes a problem if o$weights is given, optimized from a different projects and we are trying to evaluate it on this projects)
+	if(!isempty(o$weightsigns)){
+		for(name in names(o$weights)){
+			if(is.null(o$weightsigns[[name]])){ o$weightsigns[[name]]=0; }
+		}
+	}
 	return(o[c('weights','weightsigns','curves')]);
 }
 
@@ -125,15 +139,16 @@ projects_optimsetup=function(ps,...){
 		,weights=NULL #you can provide previous starting point for weights & curves here.
 		,curves=NULL
 		,enforceweightsigns=F # hard-enforce weightsigns by returning -Inf as evaluation when a weight sign does not match the weightsign. Not recommended, b/c -inf may not be okay with some optimization methods (e.g., Nelder-Mead); use softenforceweightsigns instead.
-		,softenforceweightsigns=T #each undesired weightsign will cause between -1..-2 (proportional to magnitude) penalty in the evalution score. 
+		,softenforceweightsigns=T #each undesired weightsign will cause between -1..-2 (proportional to magnitude) penalty in the evalution score.
+		,usedefaultweightsigns=T #whether to use the weightsigns from the defaultparams file, or as they are listed in the current project weights. 
 		,hardzeroweights=NULL #give a list of features (e.g., 'opentargetsurface_isopentargetsurface') that you want to hard-set at zero and exclude from optimization. We use prefix-matching for these items.
 ,lockzeroweights=F #whether to keep the existing zero-weights (ie., exclude them from further optimization/inclusion)
 ,lockzerocurves=F
 ,lockweights=NULL #names of the weights to lock (prevent from changing)
 		,...);
 	stopfif(!is.null(o$numcores),'numcores argument is now obsolete. Use config("numcores",X) to set up the number of cores.');
-	
-	#keep only the projects that have known targets (the projects that do not have known targets cannot be optimized on.)
+
+		#keep only the projects that have known targets (the projects that do not have known targets cannot be optimized on.)
 	Ikeep=rep(F,length(ps));
 	for(i in 1:length(ps)){
 		Ikeep[[i]]=!isempty(ps[[i]]$knownpositives);
@@ -154,13 +169,12 @@ projects_optimsetup=function(ps,...){
 	for(i in 1:length(ps)){    ps[[i]]=list_removefields(ps[[i]],'reportforgenes');  }
 	stopfif(isempty(ps[[1]][['weights']]),'projects_runonce should have made p$weights available, but it is not available.')
 	dbg_warnfif((o$enforceweightsigns||o$softenforceweightsigns)&&is.null(ps[[1]]$weightsigns),'If you wish to enforcewightsign, it is recommended that you call projects_fillweightsigns yourself, before using optimization, so you can choose whether to reimportdefaultparams for the weightsign determination. reimportdefaultparams=F is used here, so the signs will be based on the current weight values.')
-	ps=projects_fillweightsigns(ps,runonce=T,reimportdefaultparams=F);
+	ps=projects_fillweightsigns(ps,o,runonce=T);
 	
 	weightsandcurves=projects_getweightsandcurves(ps,o);
 	weights=weightsandcurves[['weights']];
 	weightsigns=weightsandcurves$weightsigns;
 	curves=weightsandcurves$curves;
-	
 	
 	Iweights = data_Icols(as.data.frame(weights),o$Iweights);
 	Icurves = data_Icols(as.data.frame(curves),o$Icurves);
@@ -225,6 +239,7 @@ projects_optimsetup=function(ps,...){
 ###############################################################
 #This function is for direct calling, when you want to evaluate a set of weights and curves, without having to go in projects_optimweightsandcurves()
 projects_evalweightsandcurves=function(ps,weights=NULL,curves=NULL, enforceweightsigns=F,softenforceweightsigns=T,...){
+	if(is.namedlist(ps)){ ps=list(ps); }
 	r=projects_optimsetup(ps,weights=weights,curves=curves,enforceweightsigns=enforceweightsigns,softenforceweightsigns=softenforceweightsigns,...);
 	ps=r$ps; o=r$o; weights=r[['weights']]; weightsigns=r$weightsigns; curves=r$curves; Iweights=r$Iweights; Icurves=r$Icurves; par=r$par;
 	res=projects_evalweightandcurvevector(par, o, ps=ps, weights=weights,weightsigns=weightsigns,Iweights=Iweights,curves=curves,Icurves=Icurves,enforceweightsigns=o$enforceweightsigns,softenforceweightsigns=o$softenforceweightsigns,doparallel=o$doparallel);
@@ -323,8 +338,9 @@ projects_optimweightsandcurves=function(ps,...){
 		logfile=project_optimlogfile(o);
 		log = project_getoptimlogpopulation(optimlogfile=logfile,getdetailed=T,o,weights=weights,curves=curves,Iweights=Iweights,Icurves=Icurves);
 		o$optimlogfile = io_addfilenameprefix(logfile,time_date(format='.tmp.%Y%m%d.%H%M%S.'));
+		data_writefile(data.frame(),o$optimlogfile); #create an empty file, otherwise the getlogfile() creates a copy of the default log file.
 		
-		#run once normally for the current weights and weights (from ps weights or input argument)
+		#run once normally for the current weights and curves (from ps weights or input argument)
 		bestres=projects_optimweightsandcurves(ps,opt_set(o,par=par,weights=weights,weightsigns=weightsigns,curves=curves,Iweights=Iweights,Icurves=Icurves,recursion__=T,optimizelogfile=F));
 		
 		if(nrow(log$data)>0){ for(i in 1:nrow(log$data)){
@@ -351,11 +367,12 @@ projects_optimweightsandcurves=function(ps,...){
 	#we run each method individually, so we can save each
 	if(length(o$method)>1){
 		methods=o$method;
+		res=list(weights=weights,curves=curves);
 		for(i in 1:length(methods)){
 			if(is.null(o$noworsethaninit)){ o$noworsethaninit=i==length(methods); }
 			o$method=methods[[i]];
 			msgfif(o$trace,'============= [[ method %d of %d: %s ]] ============ %s',i,length(methods),o$method,var_pick(o$optimcomment,o$optimcomment,''));
-			res=projects_optimweightsandcurves(ps,opt_set(o,par=par,weights=weights,weightsigns=weightsigns,curves=curves,Iweights=Iweights,Icurves=Icurves,recursion__=T));
+			res=projects_optimweightsandcurves(ps,opt_set(o,par=par,weights=res$weights,curves=res$curves,weightsigns=weightsigns,Iweights=Iweights,Icurves=Icurves,recursion__=T));
 			weights=res$weights;
 			curves=res$curves;
 		}
@@ -375,6 +392,7 @@ projects_optimweightsandcurves=function(ps,...){
 	}
 	loadlogpopulation=var_pickfirstnotnull(o$methodcontrols[[o$method]]$loadlogpopulation,o$loadlogpopulation);
 	if(identical(o$method,'ga')&&var_tobool(loadlogpopulation)){
+		#browser()
 		pop=project_getoptimlogpopulation(o,weights=weights,Iweights=Iweights,curves=curves,Icurves=Icurves);
 		if(!isempty(pop)){
 			assertf(ncol(pop)==length(par));
@@ -706,7 +724,7 @@ projects_optimrecipe=function(ps,...){
 	
 	for(i in seq(1,o$numrepeats)){
 		if(o$freshstart){
-			optimres=list(); ps=projects_reimportdefaultparams(ps); ps=projects_fillweightsigns(ps); ps=projects_runonce(ps); .GlobalEnv$projects_optimrecipe_freshstarted=T;
+			optimres=list(); ps=projects_reimportdefaultparams(ps); ps=projects_fillweightsigns(ps,o); ps=projects_runonce(ps); .GlobalEnv$projects_optimrecipe_freshstarted=T;
 		}
 		else if(i==1 && var_tobool(.GlobalEnv$projects_optimrecipe_freshstarted)){ optimres=list(); ps=projects_runonce(ps); }
 		for(subi in forlength(o$subsets)){
@@ -725,13 +743,168 @@ projects_optimrecipe=function(ps,...){
 	tictoc_pretty()
 	return(invisible(optimres));
 }
+
+###############################################################
+#Default parameters for projects_optimweightsandcurves()
+#"OO" stands for "OPTIMIZATION OPTIONS"
+projects_optimoptions=function(...){
+o=opt_set(devmode=F,...);
+DEVMODE=o[['devmode']];
+OO=list(
+  hardzeroweights='opentargetsurface_isopentargetsurface'
+  ,freshstart=F #when true, we start with the defaultparams file instead of the optimizedparams file.
+  ,method=csv('L-BFGS-B,SANN,Nelder-Mead,ga,Nelder-Mead,checkzeros,sfs') #the methods are listed here, but we manually use one or more below and run them separately.
+  ,numrepeats=1 #For randomized methods, repeating may result in different results. How many times should we repeat?
+  ,trace=1,
+  methodcontrols=list(
+  'SANN'=list(maxit=var_pick(DEVMODE,5,1000))
+  ,'Nelder-Mead'=list(
+    reltol=0.001
+    ,enforcesign=T, lower=-3, upper=3 #enforcesign will trigger the use of boxconstraint version of Nelder-Mead.
+  ) 
+  ,sfs=list(
+    abstol=0.001 #what level of accuracy improvement (forward) or reduction (reverse-elimination) are we willing to accept?
+   ,suboptim=T
+   ,groupweightsandcurves=F #when false, use osubtim$method=Brent to optimize individual parameters.
+   ,osuboptim=list(singlepar=T,method="Brent",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T, lower=-3, upper=3,maxit=1000)
+   #,osuboptim=list(singlepar=T,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.01,0.001),trace=0,enforcesign=T,,maxit=1000)
+   #,osuboptim=list(singlepar=T,method="SANN",reltol=var_pick(DEVMODE,0.1,0.001),trace=0,enforcesign=F, OO$softenforceweightsigns,maxit=100)
+   #,osuboptim=list(singlepar=T,method="L-BFGS-B",trace=0,enforcesign=T, lower=-3, upper=3,maxit=100)
+   ,doparallel=var_pick(DEVMODE,F,T)
+   ,enforcesign=T, lower=-3, upper=3
+  )
+  ,parranges=list(
+    abstol_accept= 0.001 #minimum improvement for updating parameters.
+    ,abstol_walk= -0.001 #keep walking while allowing this much sacrifice in eval.
+    ,stepsize='1%',repeatifimproved=F,maxsteps=100,enforcesign=T, lower=-3, upper=3, centerinrange=F, trace=1
+  )
+  ,'ga'=list(
+    popSize=var_pick(DEVMODE,5,1000),maxit=var_pick(DEVMODE,5,100),stalerun=10,parallel=T
+    ,enforcesign=T, lower=-3, upper=3
+    ,suboptim=T,osuboptim=list(method="Nelder-Mead",poptim = 0.05,pressel=0.5,control=list(fnscale=-1,reltol=var_pick(DEVMODE,0.1,0.001),trace=0)) #it runs optim() quietly, so trace>0 would be a waste.
+    ,savepopulation=T
+    ,jittersuggestions=0
+   )
+  ,'L-BFGS-B'=list(reltol=0.01,lower=-3,upper=3)
+  )
+  , optimizedparamsfile=T,devmode=DEVMODE,trace=1, removeredundancy=T
+  ,Iweights=NULL,Icurves=NULL #don't change these, but use subsets to control weights vs. curve optimization.
+  ,subsets='weights+curves' #csv of 'weights,curves,weights+curves'. Leave NULL to decide automatically (all three on fresh start, only weights+curves on non-fresh start)
+  ,doparallel=T, setupcluster=!DEVMODE||!sys_issacanlap()
+  
+  # after the SFS optim (STEP 1 below), we now lock in the zero-weights and zero-curves, so they do not get added again. We also lock gtex_numtissuesgt10tpm_percentile.
+  ,lockzeroweights=F
+  ,lockzerocurves=F
+  ,lockweights='' #prevent the weights listed here from changing during optimization, (e.g., to avoid the problem of gtex weight keeping getting smaller while others take over. We usually use/check gtex to see if something is a good target; so it is favorable to maintain a high weight for gtex.)
+  ,updateoptimizedparams_abstolperparam=0.001 #what is the minimum improvement for each additional feature, to update the yamlfile.
+  )
+
+#OO$method=list_remove(OO$method,'SANN');
+return(OO);
+}
+
 ###############################################################
 #a convenience function that uses the parent environment to grab the variables.
-#Used in pancancer_optimize_ahmet.rmd
+#Used in pancancer_optimize.rmd
 projects_optimrecipe__=function(optimres=NULL,...){
 	env=parent.env(environment());
 	optimres=projects_optimrecipe(env[['ps']],env[['OO']],comment=env[['cmnt']],weights=optimres$weights,curves=optimres$curves,...);
 	return(invisible(optimres));
+}
+
+###############################################################
+# Run our predefined optimization stages.
+projects_optim_multistage=function(ps,...){
+	o=opt_set(
+		devmode=F
+		#You can include the phrase '.withlockedweights' or '.loadlogpopulation' in a stage name.
+		#,stages='none,updatelogfile,sfs.singlepar,sfs.withselected.multipar,ga.withlockedweights'  #a csv of the stages we apply, in that order.
+		,stages='none,updatelogfile,sfs.singlepar,ga.withlockedweights'  #a csv of the stages we apply, in that order.
+		,comment=''
+		,optimres=NULL
+		,...);
+	DEVMODE=o[['devmode']];
+
+	## RUN DIFFERENT OPTIMIZATION STRATEGIES
+	source_disabled__('util.r'); source_disabled__('projects.r'); source_disabled__('project.r'); source_disabled__('pancancer.r'); source_disabled__('optim.r'); source_disabled__('optim_sfs.r')
+	cmnt=o[['comment']];
+	res=o[['optimres']];
+	o$stages=arr_csv(o$stages);
+	tictoc::tic();
+	for(stagei in forlength(o$stages)){
+		stage=o$stages[[stagei]];
+		msgf('----------------- [[ Stage %d of %d: %s ]] ----------------',stagei,length(o$stages),stage);
+		OO=projects_optimoptions(o);
+		if(DEVMODE){ OO$methodcontrols$ga$parallel=F; OO$doparallel=F; } #Useful when debugging. Commenting this line out will revert back to T (b/c of OO_reset())
+		#if(DEVMODE){ OO$Iweights=1:3; OO$Icurves=1:3; }
+		if(str_contains(stage,'withlockedweights')){ OO$lockweights=csv('gtex_numtissuesgt10tpm_percentile,gtex_maxtpm_nobrain_percentile'); }
+		else{ OO$lockweights=''; }
+
+
+		#[[ Stage 0: recalculate the optimscore  ]]
+		# This may not update the optimscore in the yaml file if it contains something better there already. You may need to manually remove the optimscore, e.g., if you are using a different list in ps or if you have modified knownpositives.
+		if(stage == 'none'){
+			OO$method='none'; cmnt=',recalculate-scores';
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+		#[[ Stage 0.5: update the logfile optimscore values and change any offending weightsigns ]]
+		#After we copy over the defaultlogfile for a new project-set, the optimscore values would be missing. The features and weights in the logfile may also not reflect the current setup (e.g., we may now have new enrichment features), we'll update for those as well.
+		else if(stage == 'updatelogfile'){
+			## The update will involve weight-scaling. You need to manually quench the curves if they are larger than you want.
+			OO$method='none'; OO$optimizelogfile=T; OO$removeredundancy=F; cmnt=',recalculate-scores';
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+		# [[ Stage 1: SFS selection with singlepar optimization ]]
+		else if(stage == 'sfs.singlepar'){
+			### SFS SINGLEPAR OPTIMIZATION: "Sequential Forward Selection with Brent's optimization to optimize the newly added parameter". Tends to limit the number of parameters selected, minimizes the computation time. A feature is added to the selected set, only if it improves the MAP score of the set by at least 0.1%.
+			OO$subsets='weights,curves'; OO$numrepeats=var_pick(DEVMODE,1,3); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt='';
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,lockzeroweights=F, lockzerocurves=F,updateoptimizedparams_abstolperparam=0.0015,o)
+			OO$subsets='curves'; OO$numrepeats=var_pick(DEVMODE,1,1); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; 
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,lockzeroweights=F, lockzerocurves=F, updateoptimizedparams_abstolperparam=0.001,o);
+			#In multi-cancer optimization, I locked the weight gtex_numtissuesgt10tpm_percentile after this stage.
+		}
+		# [[ Stage 2,4,6: Genetic Algorithm ]] Stage 4 should be used only if Stage3 is applied. Stage 6 should be used only if Stage5 is applied.
+		else if(stage=='ga'||str_isprefix(stage,'ga.')){
+			### Genetic Algorithm with suboptim. Genetic algorithm with a sub-optimization of the top-scoring individual (?) in the population using Nelder-Mead. (poptim = 0.05,pressel=0.5)
+			loadlogpopulation=var_pickfirstnotnull(o$loadlogpopulation,str_contains(stage,'loadlogpopulation'));
+			OO$lockzerocurves=T;
+			#browser();
+			OO$methodcontrols$ga=modifyList(OO$methodcontrols$ga, list(optim=T, popSize=var_pick(DEVMODE,5,360), stalerun=20, loadlogpopulation=loadlogpopulation, jittersuggestions=0)); #we used to use jittersuggestions=0.02, but it results in too large of a change and ga is unable to recover the iniital solution.
+			OO$method='ga,Nelder-Mead';  OO$numrepeats=var_pick(DEVMODE,1,3);   cmnt='';
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+		# [[ Stage 3: SFS with multipar optimization (using current res as starting point) ]]
+		else if(stage == 'sfs.withselected.multipar'){ #if used, it is recommended to follow it with a round of 'ga'
+			## SFS selectnonzeropars (they have been well-established for inclusion). Using suboptim=multipar to identify if any additional features can be included in combination with previous ones.
+			#this was not a successful strategy. e.g,. it does not work as well as Brent's if we applied it for singlepar.
+			OO$lockzeroweights=F; OO$lockzerocurves=F; OO$methodcontrols$sfs$selectnonzeropars=TRUE; OO$methodcontrols$sfs$locknonzeropars=FALSE;
+			OO$methodcontrols$sfs$suboptim=T; OO$methodcontrols$sfs$osuboptim=list(singlepar=FALSE,jitter=0.01,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.001,0.001),enforcesign=T,maxit=1000,trace=0);
+			OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,20); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; 
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+		# [[ Stage 5: reverse-elimination ]]
+		else if(stage == 'rfs'){ #if used, it is recommended to follow it with a round of 'ga'
+			#OO$lockweights=csv('gtex_numtissuesgt10tpm_percentile,gtex_maxtpm_nobrain_percentile');
+			OO$lockweights='';
+			OO$lockzerocurves=T;
+			OO$methodcontrols$sfs=opt_set(OO$methodcontrols$sfs, direction='reverse', suboptim=TRUE, abstol= -0.001); 
+			OO$updateoptimizedparams_abstolperparam=0.001;
+			OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,3); OO$method='sfs'; OO$softenforceweightsigns=F; cmnt=''; 
+			OO$methodcontrols$sfs$osuboptim=list(singlepar=FALSE,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.1,0.001),enforcesign=T,maxit=var_pick(DEVMODE,3,100),trace=1,lower=-3,upper=3,jitter=0.01);
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+		# [[ Stage 6: onebyone optimization of current parameters ]]
+		else if(stage == 'onebyone'){
+			## one-by-one optimization of each parameter (NOT USED. did not really give any improvement over other optimizaitons)
+			OO$methodcontrols$onebyone=opt_set(OO$methodcontrols$sfs, suboptim=T, abstol=0.001); 
+			OO$updateoptimizedparams_abstolperparam=0.001
+			OO$subsets='weights+curves'; OO$numrepeats=var_pick(DEVMODE,1,1); OO$method='onebyone'; OO$softenforceweightsigns=F; cmnt=''; 
+			OO$methodcontrols$onebyone$osuboptim=list(singlepar=TRUE,method="Nelder-Mead",reltol=var_pick(DEVMODE,0.1,0.001),enforcesign=T,maxit=var_pick(DEVMODE,3,100),trace=1,lower=-3,upper=3,jitter=0.05);
+			res=projects_optimrecipe(ps,OO,comment=cmnt,weights=res$weights,curves=res$curves,o);
+		}
+	}
+	tictoc_pretty()
+	return(invisible(res));
 }
 
 
@@ -797,8 +970,7 @@ projects_getnames=function(ps){
   if(is.null(names(ps))){
     pnames=paste0('project',1:length(ps));
     for(i in 1:length(ps)){
-      pname=ps[[i]][['disease']];
-      if(!is.null(pname)){ pnames[[i]]=pname; }
+			pnames[[i]]=var_pickfirstnotnull(ps[[i]][['disease']],pnames[[i]]);
     }
   }
   return(pnames)
@@ -937,8 +1109,6 @@ projects_collectdatacol_old=function(ps, col){
       pd = p$datawithscore[,col,drop=F];
       
       dthera=theratardb_disease2genesymbols(p$theratardisease,asframe=T, minstatusscore = 0)
-      
-      
       
       pd$higheststatus_=0;
       rownames(pd)=rownames(p$datawithscore)

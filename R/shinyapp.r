@@ -41,7 +41,7 @@ library(shiny); library(ggplot2); library(shinyjs);
 #https://appsilon.com/shiny-application-layouts/
 ui=fluidPage(
   useShinyjs(),
-  fluidRow(column(width=12,  titlePanel("Immunotar"))),
+  fluidRow(column(width=12,  titlePanel("IMMUNOTAR"))),
   fluidRow(
   	column(width=12,
   				 sidebarLayout(
@@ -90,12 +90,12 @@ server=function(input, output, session) {
 		d=newp()$datawithscore;
 		cbind(gene=rownames(d),d)
 		}
-		,options=list(pageLength = 10));
+		,options=list(pageLength = 5));
   output$myplot =renderPlot({ project_rankplot(newp())+ggtitle('RankPlot') });
 	output$mytext <- renderText({s=''; rankeval=newp()$rankeval; if(!is.null(rankeval)){s=sprintf('Rankeval: %f',rankeval);}; s});
 }
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(height = 1080))
 
 }
 
