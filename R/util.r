@@ -621,6 +621,7 @@ amialibrary=function(){
   );
   return(T)
 }
+#' @export
 mypackagename=function(){
   ret=packageName(); #returns the packagename when installed, returns NULL when not installed.
   if(!is.null(ret)){ return(ret); }

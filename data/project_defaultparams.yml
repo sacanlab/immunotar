@@ -12,6 +12,8 @@ colrescale:
 
 enrich: #parameters to be passed into data_enrich()
 #only passing in databases that don't need additional parameters to enrich with 
+  #depmap is not included in this default list of enrichtypes, because it would require a specific depmapid to also be given.
+  #if you would like to include depmap as an enrichment type in your project, you must change this enrichtypes property to also include 'depmap'
   enrichtypes: 'gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
   #some enrich types require additional arguments. provide them here.
   #depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search.

@@ -221,7 +221,6 @@ project_fillweightsigns=function(p,...){ #keep "...", when we run this in parall
 # or do manual analysis, before you call project_run()
 # First argument is multi-purpose. It can be a yamlfile, or a project structure.
 
-#' @export
 project_load=function(yamlfile,loaddatasets=T,dosummarize=T, dorescale=T){
   installpackageifmissing('yaml');
   if(is.character(yamlfile)){
@@ -350,7 +349,6 @@ project_prepare=function(p,...){
 
 ###############################################################
 # p can be an already loaded configuration, or a configuration filename.
-#' @export
 project_run=function(p,...){
   o = opt_set(
     getfull=T #if True, we return the entire project structure. When false, we only return the score vector.
@@ -893,7 +891,6 @@ project_selectcolsbyweight=function(p,minabsweight=0,bestingroup=F){
 ###############################################################
 #create plot data structure for use with ggplot.
 #if you feel the need to customize the plot, do so by adding options to the o list below.
-#' @export
 project_rankplot=function(p, ...){
   if(!exists('opt_set')){ source_disabled__('util.r'); }
   o=opt_set(
@@ -1022,7 +1019,6 @@ project_selectheatmapfeatures=function(p, medianexp=F, ...){
 #colnames: which columns to show. will default to some pre-selected columns that we like showing.
 #withexprcol:  if true, we add expr_mean_* column to colnames.
 #any additional arguments are passed into ComplexHeatmap::pheatmap
-#' @export
 project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, medianexp=F, legendtitle='Feature\nValue\n', ...){
   o=opt_set(
     markgenesby=NULL #use one or more p fields. e.g., use 'knownpositives'

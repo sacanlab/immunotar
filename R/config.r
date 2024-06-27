@@ -312,6 +312,7 @@ config=function(varname,newvalue,useonlystored=F,default=NULL){
 }
 
 #TODO: I renamed config() with config(). After updating all calls, delete this file.
+#' @export
 myconfig=function(...){ return(config(...)); }
 
 #stk__=dbg_nicestack(1); message(sprintf('config.r sourced from: %s',stk__));

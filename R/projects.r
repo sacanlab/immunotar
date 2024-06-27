@@ -30,7 +30,6 @@ projects_run_single=function(p,...){
 #' projects_run is used to generate the IMMUNOTAR score for  each protein similar to project_run however, this is when you have multiple different cancer expression datasets. These datasets would have to be specified separately in the yaml file or in the project structure within R. This function will run through each project separately and project a structure with the outputs for each project. 
 #' To make this function run faster, it uses parallel computing. You can disable this by setting doparallel=F. Use config('numcores',XXX) to set the number-of-cores; if not set, it will default to 2 less than the total cores on your computer. 
 #' doparallel argument is passed on to list_map()
-#' @export
 projects_run=function(ps,...){
 	o=opt_set(...);
 	if(is.namedlist(ps)){ ps=list(ps); }
@@ -281,7 +280,6 @@ projects_evalweightandcurvevector=function(v, ps, weights,weightsigns,Iweights,c
 #' To log the optimized weights in an excel file, the user can feed that using the optimlogfile= parameter. 
 #' 
 #' 
-#' @export
 projects_optimweightsandcurves=function(ps,...){
 	if(!exists('myoptim')){ source_disabled__('optim.r'); }
 	
@@ -585,7 +583,6 @@ projects_getnames=function(ps){
 #summarize the gene scores across multiple projects.
 #names: project names. will default to list of p$name if available. otherwise 'projectN'
 #by Rawan
-#' @export
 projects_summarizeresults=function(ps,pnames=NULL){
 	map=pancancer_diseasemap()
 	for(i in 1:length(ps)){
@@ -981,7 +978,6 @@ projects_getnames=function(ps){
 #names: project names. will default to list of p$name if available. otherwise 'projectN'
 #by Rawan
 
-#' @export
 projects_summarizeresults=function(ps,pnames=NULL){
   map=pancancer_diseasemap()
   for(i in 1:length(ps)){
@@ -1009,7 +1005,6 @@ projects_summarizeresults=function(ps,pnames=NULL){
 #Create a summarized heatmap across projects 
 #by Rawan
 
-#' @export
 projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='Gene\nscore\n '){
   s=projects_summarizeresults(ps)
   
@@ -1068,7 +1063,6 @@ projects_heatmap_scores=function(ps,rows=NULL, levels=NULL, legendtitle='Gene\ns
 #options are passed into projects_rankimpact()
 #Primary caller: pancancer_optimize.rmd and/or pancancer_analyze.rmd
 
-#' @export
 projects_rankimpact_plot=function(d,...){
   if(!is.data.frame(d)){
     d=projects_rankimpact(d,...);
@@ -1147,3 +1141,4 @@ projects_collectdatacol=function(ps, col){
 }
 ###############################################################
 #stk__=dbg_nicestack(1); message(sprintf('projects.r sourced from: %s',stk__));
+
