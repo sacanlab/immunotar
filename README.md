@@ -1,7 +1,7 @@
-<table>
-  <tr>
-    <td><h1>ImmunoTar</h1></td>
-    <td><img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="200" width="200"/></td>
+<table style="border: none; width: 100%;">
+  <tr style="border: none;">
+    <td style="border: none; vertical-align: middle;"><h1 style="margin: 0;">ImmunoTar</h1></td>
+    <td style="border: none; text-align: right; vertical-align: middle;"><img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="250" width="250"/></td>
   </tr>
 </table>
 
