@@ -1,6 +1,6 @@
 <h1>
-  <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="100" width="100" style="vertical-align: middle;"/>
   ImmunoTar
+  <img src="img/ImmunoTar_Logo.svg" alt="ImmunoTar Logo"height="150" width="150" style="vertical-align: middle; margin-left: 10px;"/>
 </h1>
 
 ## Introduction
