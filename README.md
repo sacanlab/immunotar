@@ -3,7 +3,6 @@
   <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="200" width="200"/>
 </div>
 
-
 ## Introduction
 
 General introduction: Motivation, goals, and features.
