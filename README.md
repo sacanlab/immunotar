@@ -1,7 +1,8 @@
-<h1>
-  ImmunoTar
-  <img src="img/ImmunoTar_Logo.svg" alt="ImmunoTar Logo"height="150" width="150" style="vertical-align: middle; margin-left: 10px;"/>
-</h1>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+  <h1 style="margin: 0;">ImmunoTar</h1>
+  <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="200" width="200"/>
+</div>
+
 
 ## Introduction
 
