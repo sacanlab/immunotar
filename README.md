@@ -1,9 +1,7 @@
-<table style="border: none; width: 100%;">
-  <tr style="border: none;">
-    <td style="border: none; vertical-align: middle;"><h1 style="margin: 0;">ImmunoTar</h1></td>
-    <td style="border: none; text-align: right; vertical-align: middle;"><img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="250" width="250"/></td>
-  </tr>
-</table>
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+  <h1 style="margin: 0;">ImmunoTar</h1>
+  <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" style="height: 250px; width: 250px;"/>
+</div>
 
 ## Introduction
 
