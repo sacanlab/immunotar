@@ -1,5 +1,7 @@
-# ImmunoTar
-
+<h1>
+  <img src="img/ImmunoTar_Logo.svg" alt="ImmunoTar Logo" height="50"/>
+  ImmunoTar
+</h1>
 
 ## Introduction
 
