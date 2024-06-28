@@ -1,7 +1,7 @@
-<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-  <h1 style="margin: 0;">ImmunoTar</h1>
-  <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" style="height: 250px; width: 250px;"/>
-</div>
+<h1>
+  <img src="img/ImmunoTar_logo.png" alt="ImmunoTar Logo" height="250" width="250" style="vertical-align: middle;"/>
+  ImmunoTar
+</h1>
 
 ## Introduction
 
