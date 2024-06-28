@@ -73,6 +73,7 @@ enrich_compartments_sp = function(d){
 #' The input to the function is a vector or gene/protein names or an expression data-set
 #' The output will include the confidence score associated to each gene in the expression data-set 
 #' 
+#' @export
 enrich_cirfess_spc = function(d){
   moredata=cirfessdb_getspc(rownames(d));
   return( enrich_merge(d, moredata,'cirfess_') );
@@ -87,6 +88,7 @@ enrich_cirfess_spc = function(d){
 #' The input to this function is an expression data-set and the cancer phenotype. 
 #' The output of this function is a column added to the expression data-set labeled depmap which includes the probability of the gene being associated to the cancer phenotype specified. 
 #' 
+#' @export
 enrich_depmap = function(d, depmapids, collate='merge', mergefunc=max, colname=NULL ){
   if(is.null(collate)){ collate='merge'; }
   if(is.null(mergefunc)){ mergefunc=max; }
@@ -140,6 +142,7 @@ enrich_depmap = function(d, depmapids, collate='merge', mergefunc=max, colname=N
 #' The input to this function is an expression data-set and pathways of interest in parameter goids. 
 #' The output of this function is an added column to the expression data-set labeled go which includes a binary scoring based on whether the gene in the expression data-set is found in the GO pathways queried. 
 #' 
+#' @export
 enrich_go = function(d, goids, collate='separate', colname=NULL){
   if(is.null(collate)){ collate='separate'; }
 	genes=c();
@@ -187,6 +190,7 @@ enrich_go = function(d, goids, collate='separate', colname=NULL){
 #' The input to this function is the expression data-set. 
 #' The output of this function is a column added to the expression data-set labeled uniprot which includes the length of the extracellular section of the protein based on uniprot. 
 #' 
+#' @export
 enrich_uniprot = function(d){
   moredata=uniprotdb_getecmtotallength(rownames(d));
   return(enrich_merge(d, moredata, 'uniprot_'))
@@ -197,6 +201,7 @@ enrich_uniprot = function(d){
 #' The input to this function is an expression data-set.
 #' The output of this function is a column added to the expression data-set labeled opentarget which is a binary score depending on whether or not the gene/protein from the expression data-set is found in this database. 
 #' 
+#' @export
 enrich_opentarget = function(d){
   moredata=opentarget_getgenes(rownames(d));
   return( enrich_merge(d, unique(moredata),'opentarget_') );
@@ -225,6 +230,7 @@ enrich_theratar=function(d, diseases='%', moa=NULL,  mergefunc=max, onlysurface=
   return(enrich_merge(d, unique(dthera_surface), 'theratarsurface_'))
 }
 
+#' @export
 enrich_theratarsurface=function(d, diseases='%', moa=NULL, mergefunc=max,immunomult=1,immunoadd=0){
   return(enrich_theratar(d,diseases,moa,immunomult,onlysurface=T));
 }

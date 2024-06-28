@@ -112,5 +112,28 @@ A few functions within ImmunoTar allow the user to visualize results in heatmaps
 ```r
 proj = immunotar::project_run( 'demo_project.yml' )
 
+#Shows a heatmap of the top weighted features within every database included in ImmunoTar
+
+project_resultheatmap(proj, withexprcol = F, nc=2)
 
 ```
+
+![Alt Text](img/ImmunoTar_heatmap_example.png) 
+
+```r
+#Shows a rankplot of the ImmunoTar score on the y-axis and the rank of the protein on the x-axis, labeling the knownpositives along that curve 
+project_rankplot(proj, knownpositives=proj$knownpositives, includequantile=T)
+
+```
+
+![Alt Text](img/ImmunoTar_Rankplot_example.png)
+
+```r
+#Allows users to launch a GUI to manipulate the curve and weight parameters separately based on their expertise to see how changing those parameter values can affect their knownpositives on the rankplot.
+source('shinyapp.r')
+
+immunotar_runshiny(proj)
+
+```
+![Alt Text](img/ImmunoTar_shinyGUI.png)
+

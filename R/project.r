@@ -88,6 +88,7 @@ project_loaddatasets=function(p,dosummarize=T, dorescale=T, ...){
 
   return(p);
 }
+
 project_minimizefordevmode=function(p,numknownpositives=5,numothergenes=5){
   stopfif(isempty(p[['data']]),'Call this function after a project has been prepared.');
     keepgenes=c();
@@ -221,6 +222,7 @@ project_fillweightsigns=function(p,...){ #keep "...", when we run this in parall
 # or do manual analysis, before you call project_run()
 # First argument is multi-purpose. It can be a yamlfile, or a project structure.
 
+#' @export
 project_load=function(yamlfile,loaddatasets=T,dosummarize=T, dorescale=T){
   installpackageifmissing('yaml');
   if(is.character(yamlfile)){
@@ -317,7 +319,7 @@ project_prepare=function(p,...){
 
   #knownpositives & knownnegatives may not all be present in the data. Remove those absent and create auxilliary indices to speed up rankeval().
   if(!is.null(p[['knownpositives']])) {
-      p[['knownpositiveinds']] = match(p[['knownpositives']], rownames(p$data)); #save in p to speed-up stat_rankeval
+      p[['knownpositiveinds']] = match(csv(p[['knownpositives']]), rownames(p$data)); #save in p to speed-up stat_rankeval
       Ifound=!(is.na(p[['knownpositiveinds']]));
       msgfif(!all(Ifound),'project_prepare: The following knownpositives are not in the data matrix: %s ....',str_csv(p$knownpositives[!Ifound]));
       p[['knownpositiveinds']] = p[['knownpositiveinds']][Ifound];
@@ -349,6 +351,7 @@ project_prepare=function(p,...){
 
 ###############################################################
 # p can be an already loaded configuration, or a configuration filename.
+#' @export
 project_run=function(p,...){
   o = opt_set(
     getfull=T #if True, we return the entire project structure. When false, we only return the score vector.
@@ -891,6 +894,7 @@ project_selectcolsbyweight=function(p,minabsweight=0,bestingroup=F){
 ###############################################################
 #create plot data structure for use with ggplot.
 #if you feel the need to customize the plot, do so by adding options to the o list below.
+#' @export
 project_rankplot=function(p, ...){
   if(!exists('opt_set')){ source_disabled__('util.r'); }
   o=opt_set(
@@ -998,17 +1002,17 @@ project_shortenfeaturenames=function(cols,removescaling=T,...){
 
 ########################################################################
 #Selecting features with highest weights from each enrichment dataset 
-project_selectheatmapfeatures=function(p, medianexp=F, ...){
+project_selectheatmapfeatures=function(p, withexprcol=F, ...){
   features=c()
   f.names=unique(gsub("_.*", "", names(p$weights)))
   for(i in f.names){
     f=names(which.max(abs(unlist(p$weights[grepl(i,names(p$weights))]))))
     features=c(features,f)
   }
-  if(medianexp){
-    features=features[-grepl('expr', features)]
-    features=c(names(p$weights)[grepl('expr_median', names(p$weights))], features)
-  }
+  # if(withexprcol){
+  #   features=features[-grepl('expr', features)]
+  #   features=c(names(p$weights)[grepl('expr_median', names(p$weights))], features)
+  # }
   return(features)
 }
 
@@ -1019,7 +1023,8 @@ project_selectheatmapfeatures=function(p, medianexp=F, ...){
 #colnames: which columns to show. will default to some pre-selected columns that we like showing.
 #withexprcol:  if true, we add expr_mean_* column to colnames.
 #any additional arguments are passed into ComplexHeatmap::pheatmap
-project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, medianexp=F, legendtitle='Feature\nValue\n', ...){
+#' @export
+project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, legendtitle='Feature\nValue\n', ...){
   o=opt_set(
     markgenesby=NULL #use one or more p fields. e.g., use 'knownpositives'
     ,imgfile=NULL #if given, we'll save the plot into that file.
@@ -1031,7 +1036,7 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, medianexp=F,
   d=p$datawithscore;
   if(is.null(cols)){
     dbg_warnf('No specific features selected to plot, using features with the highest weights within each enrichment database')
-    cols=project_selectheatmapfeatures(p, medianexp=medianexp, ...)
+    cols=project_selectheatmapfeatures(p, withexprcol=withexprcol, ...)
     #If we need it to be cancer specific add 
     if(!withexprcol){
       cols=cols[-grep('expr|depmap|GO', cols)]
@@ -1068,51 +1073,44 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, medianexp=F,
   if(!is.null(o$markgenesby)){
     d[,colnames(d)[grepl('opentargets', colnames(d))]]=NULL
   }
-  #ht_opt=ComplexHeatmap::ht_opt()
-  #ht_opt$heatmap_row_names_gp= grid::gpar(fontsize = 20)
-  #ht_opt$heatmap_column_names_gp= grid::gpar(fontsize = 20)
-  colnames(d)[which(colnames(d) == 'opentargetsurface')]='PMTLSurface'
+  
   colnames(d)[which(colnames(d) == 'expr')]='cancer_expr'
-  h=ComplexHeatmap::pheatmap(d,fontsize=10,show_rownames=T, show_colnames = T, treeheight_row = 0,
+  h=ComplexHeatmap::pheatmap(d,fontsize=10, show_rownames=T, show_colnames = T, treeheight_row = 0,
                              treeheight_col = 0, cluster_cols = F, cluster_rows = o$cluster_r, 
-                             color = col, na_col = 'grey', border_color = 'white', 
-                             cellwidth = 20, cellheight =10, fontsize_col = 10,
-                             fontsize_row = 9, main = o$title,
-                             heatmap_legend_param = list(title = legendtitle, 
-                                                         title_gp= grid::gpar(fontsize = 10, y=10, x=10),
-                                                         labels_gp = grid::gpar(fontsize = 10),
-                                                         title_position = "topcenter", # Title position to avoid overlapping
-                                                         labels_position = "left"
-                                                        ))
-  
-  
-  o$markgenesby=csv(o$markgenesby);
-  for(byi in forlength(o$markgenesby)){
-    by=o$markgenesby[[byi]];
-    bygenes=csv(p[[by]]);
-    I=which(rownames(d) %in% bygenes);
-    if(!length(I)){ next; }
-    pch=rep(NA,nrow(d));
-    pch[I]=20; #this is just the marker style. google pch style.
-    an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 10, fontfamily='Arial'), pt_gp = grid::gpar(fontsize = 10,fontfamily='Arial')))
-    if(by=='opentarget'){by='PMTL'}
-    if(by=='curated'){by='Validated'}
-    an@anno_list$NEEDTOCHANGE@label=by; #I couldn't change the name of the annot without this hack.
-    h=h+an
-  }
-  if(!isempty(o$markgenesby)){ #adding right-annotations mess up the labels and we have to reannotate here.
-
-    h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d), gp = grid::gpar(fontsize = 10, fontfamily='Arial')))  
+                              color = col, na_col = 'grey', border_color = 'white', 
+                              cellwidth = 20, cellheight =15, fontsize_col = 10,
+                              fontsize_row = 10, main = o$title,
+                              heatmap_legend_param = list(title = legendtitle, 
+                                                          title_gp= grid::gpar(fontsize = 10),
+                                                          labels_gp = grid::gpar(fontsize = 10),
+                                                          title_position = "topcenter", # Title position to avoid overlapping
+                                                          labels_position = "left", gap = grid::unit(5, "cm")
+                                                         ))
    
-    #,location = unit(0, "npc"), just = "left"))
-
-  }
+   
+   o$markgenesby=csv(o$markgenesby);
   
+   for(byi in forlength(o$markgenesby)){
+     by=o$markgenesby[[byi]];
+     bygenes=csv(p[[by]]);
+     I=which(rownames(d) %in% bygenes);
+     if(!length(I)){ next; }
+     pch=rep(NA,nrow(d));
+     pch[I]=20; #this is just the marker style. google pch style.
+     an=ComplexHeatmap::rowAnnotation(NEEDTOCHANGE=ComplexHeatmap::anno_simple(rep(0,nrow(d)),col=circlize::colorRamp2(c(0,1),c('white','white')),pch=pch, gp = grid::gpar(fontsize = 10, fontfamily='Arial'), pt_gp = grid::gpar(fontsize = 10,fontfamily='Arial')))
+     if(by=='opentarget'){by='PMTL'}
+     if(by=='curated'){by='Validated'}
+     an@anno_list$NEEDTOCHANGE@label=by; #I couldn't change the name of the annot without this hack.
+     h=h+an
+   }
+   if(!isempty(o$markgenesby)){ #adding right-annotations mess up the labels and we have to reannotate here.
+   
+     h=h+ComplexHeatmap::rowAnnotation(rn = ComplexHeatmap::anno_text(rownames(d), gp = grid::gpar(fontsize = 10, fontfamily='Arial')), width = unit(2, "cm"))
+        }
+
   
   fig_export(h,o);
-  
-  return(ComplexHeatmap::draw(h, heatmap_legend_side = "right", padding = grid::unit(c(2, 10, 2, 2), "pt")))
-}
+  return(ComplexHeatmap::draw(h, heatmap_legend_side = "right", annotation_legend_side ='right')) }
 
 
 ###############################################################

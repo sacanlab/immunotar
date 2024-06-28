@@ -60,11 +60,11 @@ weight: 1 #Set the default weight. If you set this, remember to override this de
 # If there are certain genes that you consider as known targets, list them here. For these genes, we
 # calculate the MAP (mean average precision) score indicating how well the analysis was able to detect them as targets.
 # Provide a list or a CSV text.
-knownpositives: 'ALK,MEGF10,GPC2'
+knownpositives: 'ALK,CD63,CD19'
 
 #After the analysis, if you would like extract a table of percentile_rank's for certain genes, use 
 # Provide a list or a CSV text.
-reportforgenes: 'ALK,GPC2'
+reportforgenes: 'ALK,CD63,CD19'
 
 #After the analysis, if you would like to write the results into a file, provide the filename here.
 #outfile: 'demo_project_result.xlsx'

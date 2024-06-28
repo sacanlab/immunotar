@@ -29,7 +29,12 @@ p=project_run('demo_project.yml')
 
 p$datawithscore[1:10,]
 
-project_resultheatmap(p, withexprcol = F, markgenesby=csv('knownpositives'), nc=2)
+project_resultheatmap(p, withexprcol = F, nc=2)
 
+project_rankplot(p, knownpositives=p$knownpositives, includequantile=T)
+
+#After making the variable p available, open and run the shinyapp.r file in rstudio. Or, source and call immunotar_runshiny() manually:
+source('shinyapp.r')
+immunotar_runshiny(p)
 
 ```
