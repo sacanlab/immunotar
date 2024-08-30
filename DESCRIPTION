@@ -9,7 +9,7 @@ License: Free for non-commercial use. Contact authors for redistribution and/or 
   use.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Comment1: Only modify the copy present in the src.r/ folder. It will be automatically
   copied and override the copy in the R package folder.
 Comment2: You do not need to list the Imports above manually. running packager_makepackage()
@@ -21,4 +21,5 @@ Imports: DBI, RSQLite, stringr, yaml, plyr, tidyverse, data.table, fgsea, readxl
   ComplexHeatmap, ggrepel, grid, RColorBrewer, stringi, tools, fs, reshape, ggVennDiagram,
   shiny, shinyjs, benchmarkme, BiocManager, devtools, digest, doParallel, foreach,
   fst, functiondepends, here, httr2, magrittr, memuse, parallel, pkgload, pryr, rappdirs,
-  stats, this.path, tibble
+  stats, this.path, tibble, DependenciesGraphs
+Remotes: datastorm-open/DependenciesGraphs
