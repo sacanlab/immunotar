@@ -44,7 +44,7 @@ project_loaddatasets=function(p,dosummarize=T, dorescale=T, ...){
 
   if('data' %in% names(p)){
     # call dataset_load() so data preparation (enrich/handlenan/rescale) can be done.
-    p=dataset_load(modifyList(p,list(dosummarize=F)));
+    p=dataset_load(modifyList(p,list(dosummarize=F)),dir=p$dir);
     return(p);
   }
 
@@ -54,14 +54,14 @@ project_loaddatasets=function(p,dosummarize=T, dorescale=T, ...){
   }
   if('dataset' %in% names(p)){
     if('datasets' %in% names(p)){ stop('configuration must not include both "dataset" and "datasets" options. Use "datasets" if you want to specify multiple datasets.'); }
-    p$dataset=dataset_load(p$dataset,dosummarize=dosummarize);
+    p$dataset=dataset_load(p$dataset,dosummarize=dosummarize,dir=p$dir);
   }
   else if('datasets' %in% names(p)){
     for(i in 1:length(p$datasets)){
       dataset=p$datasets[[i]];
       if('datafile' %in% names(dataset)){ dataset=modifyList(list(summaryprefix=tools::file_path_sans_ext(basename(dataset$datafile)),'_'),dataset); }
       else{ dataset=modifyList(list(summaryprefix=paste0('dataset',as.character(i)),'_'),dataset); }
-      dataset = dataset_load(modifyList(dataset,list(dosummarize=dosummarize, dorescale=dorescale)));
+      dataset = dataset_load(modifyList(dataset,list(dosummarize=dosummarize, dorescale=dorescale)),dir=p$dir);
       p$datasets[[i]]=dataset;
     }
   }
@@ -315,7 +315,7 @@ project_prepare=function(p,...){
   #NOTE: Fixed the issue by not rescaling the data fed separately than the enriched data. There is no need for it when running project run.
   
   #This step will do the enriching with all the databases.
-  p=dataset_load(modifyList(p,list(dosummarize=F))); 
+  p=dataset_load(modifyList(p,list(dosummarize=F)),dir=p$dir); 
 
   #knownpositives & knownnegatives may not all be present in the data. Remove those absent and create auxilliary indices to speed up rankeval().
   if(!is.null(p[['knownpositives']])) {

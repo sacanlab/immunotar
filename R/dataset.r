@@ -16,7 +16,8 @@ dataset_keeponlysurfacegenes=function(data){
 ###############################################################
 #after loading, you can use dset$data.
 # We use this function for multiple purposes: to load an experimental dataset (doenrich should be OFF), and to process the project data (dosummarize should be OFF).
-dataset_load=function(dset, ...){
+# dir is used to resolve data file locations with io_which()
+dataset_load=function(dset,basedir=NULL, ...){
   if(is.character(dset)){
     if(dset=="__ALLHUMANGENES__"||dset=="__ALLHUMANSURFACEGENES__"){
       source_disabled__('biodb.r');
@@ -41,6 +42,7 @@ dataset_load=function(dset, ...){
   }
   else if('datafile' %in% names(dset)){    
     datafile=dset$datafile;
+    datafile=io_which(datafile,c(dir,'{datadir}'))    
     cat(paste0('Reading datafile [',datafile,']...\n'));
   	source_disabled__('util.r')
     dset$data=data_readfile(datafile,rowNames=T,header=T); #todo: need to check how the io_readfile() behaves when datafile is not an xlsx file -- will it still support rowNames=T ?
