@@ -1,18 +1,28 @@
 Package: immunotar
-Title: What the Package Does (One Line, Title Case)
+Title: ImmunoTar - an immunotherapy target prioritization tool based on proteogenomic
+  data integration.
 Version: 0.0.0.9000
 Authors@R: c( person("Rawan", "Shraim", email="shraimr@chop.edu", role = c("aut",
   "cre", "cph") ), person("Ahmet", "Sacan", role = c("ths","aut", "cph")), person("Sharon",
   "Diskin",role = c("ths")), person("John", "Maris",role = c("ths")) )
-Description: What the package does (one paragraph).
+Description: To address the challenge of identifying and systematically prioritizing
+  immunotherapeutic targets computationally, we developed ImmunoTar. This tool integrates
+  multiple publicly available databases, analyzes cancer expression datasets, and
+  quantitively prioritizes potential targets based on predefined ideal immunotherapeutic
+  target criteria. In addition to adult derived databases, ImmunoTar is equipped with
+  pediatric specific databases aiming to aid in identifying pediatric-specific antigens,
+  providing a resource for developing novel therapies in pediatric oncology.
 License: Free for non-commercial use. Contact authors for redistribution and/or commercial
   use.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Comment1: Only modify the copy present in the src.r/ folder. It will be automatically
+Comment1: Packages fgsea and ComplexHeatmap are also required, but they are not listed
+  as a package dependency due to a limitation in the R installer. These packages will
+  be installed from BioConductor when they are needed at run-time.
+DevComment1: Only modify the copy present in the src.r/ folder. It will be automatically
   copied and override the copy in the R package folder.
-Comment2: You do not need to list the Imports above manually. running packager_makepackage()
+DevComment2: You do not need to list the Imports above manually. running packager_makepackage()
   will automatically add the required packages to the list.
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
