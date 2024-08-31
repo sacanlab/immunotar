@@ -4,6 +4,7 @@ source_disabled__=function(...){invisible(NULL)}
 source_disabled__('util.r');
 source_disabled__('project.r');
 
+#' @export
 immunotar_runshiny=function(p){
 
 stopfif(!exists('p')||is.null(p), 'You need to provide a project variable p before running this script.');

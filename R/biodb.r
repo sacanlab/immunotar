@@ -12,6 +12,7 @@ biodb_dir=function(){
   return(io_mkdirif(dir));
 }
 ###############################################################
+#' @export
 biodb_file=function(dbname,downloadifmissing=T){
   if(!exists('config')){ source_disabled__('config.r'); } 
   sqlitefile = config(paste0(dbname,'file')); #e.g., config("depmapdbfile")
@@ -89,6 +90,7 @@ biodb_istablefield=function(dbname,table,field){
 
 ###############################################################
 #additional arguments (query,params) are passed onto 
+#' @export
 biodb_query = function(dbname,sql,params){
   if(is.character(dbname)){ db=biodb_connect(dbname) } else{ db=dbname; }
   if(missing(params)){  t=DBI::dbGetQuery( db,sql ); }

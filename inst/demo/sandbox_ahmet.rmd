@@ -298,8 +298,9 @@ source('util.r')
 #installpackageifmissing(package)
 #repos='ropensci/plotly,ramnathv/rCharts,ahmetsacan/xxx';
 #installpackageifmissing_github(repos)
-packages=c('fgsea','ComplexHeatmap')
+packages=c('fgsea')
 installpackageifmissing(packages)
+installpackageifmissing_complexheatmap()
 
 ```
 
@@ -310,11 +311,7 @@ neededpackages('util.r')
 ```
 
 
-```{r}
-rm(list=ls())
-remove.packages('immunotar')
-devtools::install_local('C:/Users/ahmet/r.packager/immunotar.sacanlap',upgrade='never')
-```
+
 ```{r}
 # Create a project configuration:
 proj = list(
@@ -350,4 +347,31 @@ immunotar::project_load( proj )
 source('util.r')
 p=list();
 io_which('demo_experiment.xlsx', c(p$dir, "{datadir}"))
+```
+
+```{r}
+rm(list=ls())
+remove.packages('immunotar')
+devtools::install_local('C:/Users/ahmet/r.packager/immunotar.sacanlap',upgrade='never')
+```
+
+```{r}
+proj = immunotar::project_run( 'demo_project.yml' )
+
+head(proj$datawithscore[,'score',drop=F])
+```
+
+```{r}
+source('project.r')
+proj = project_run( 'demo_project.yml' )
+
+#Shows a heatmap of the top weighted features within every database included in ImmunoTar
+```
+
+```{r}
+source('project.r')
+project_resultheatmap(proj, withexprcol = F, nc=2)
+```
+```{r}
+project_rankplot(proj, knownpositives=proj$knownpositives, includequantile=T)
 ```

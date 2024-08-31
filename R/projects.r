@@ -953,7 +953,7 @@ dwc=d[,grepl('^(weight|curve):',colnames(d))]
 #colnames(dwc)=project_shortenfeaturenames(colnames(dwc)) #TODO: project_shortenfeaturenames() has an error for this.
 colnames(dwc)=gsub(paste0('_(',paste0(vec_rescaletypes(),collapse='|'),')'),'',colnames(dwc))
 colnames(dwc)=gsub('^weight:','w:',colnames(dwc)); colnames(dwc)=gsub('^curve:','c:',colnames(dwc));
-installpackageifmissing_bioc('ComplexHeatmap')
+installpackageifmissing_complexheatmap()
 plt=ComplexHeatmap::pheatmap(as.matrix(dwc),fontsize=8,show_rownames=T,show_colnames=T,scale='column')
 print(plt)
 }

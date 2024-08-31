@@ -567,7 +567,6 @@ io_pickfirstisfile=function(...,dieifnotfound=F){
   if(dieifnotfound){ stop(sprintf('None of the file choices could be located.')); }
   return(NULL);
 }
-#' @export
 io_isfileordir=function(path){
   return(!isempty(path) & file.exists(path));
 }
@@ -701,7 +700,6 @@ getdatafile=function(filename){
 #if not found and defaultdir is not given, re return the name unchanged, so the caller would then effectively interpret it to be under cwd.
 #if multiple defaultdir's are given, we search each, but use the first when the file doesn't exist.
 #defaultdir itself may contain 
-#' @export
 io_which=function(name,defaultdir=NULL){
   if(!exists('config')){ source_disabled__('config.r'); } 
 
@@ -1775,7 +1773,6 @@ sys_userdownloaddir=function(subdir=NULL){
   }
   return(sys_dirorsubdir_(dir,subdir));
 }
-#' @export
 sys_datadir=function(subdir=NULL){
   if(!exists('config')){ source_disabled__('config.r'); } 
   dir=config('datadir');
@@ -2430,6 +2427,17 @@ sys_raminfo=function(){
 sys_ischopserver=function(){
   return(grepl('^c-\\d+',sys_computername()));
 }
+###############################################################
+installpackageifmissing_complexheatmap=function(){
+  installpackageifmissing_bioc('ComplexHeatmap')
+  #ComplexHeatmap requires rjson, which is no longer available on CRAN (at least for my R version)?!
+  #If it is not installed, download from archive and install locally:
+  if(ispackagenotinstalled('rjson')){
+    rjsontgz=downloadurl('https://cran.r-project.org/src/contrib/Archive/rjson/rjson_0.2.21.tar.gz')
+    install.packages(rjsontgz)
+  }
+}
+
 ###############################################################
 
 #stk__=dbg_nicestack(1); message(sprintf('util.r sourced from: %s',stk__));

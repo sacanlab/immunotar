@@ -1067,7 +1067,7 @@ project_resultheatmap=function(p,rows=NULL,cols=NULL,withexprcol=F, legendtitle=
   }
   d=d[rows, cols]
   colnames(d)=project_shortenfeaturenames(cols = colnames(d),...)
-  installpackageifmissing_bioc('ComplexHeatmap')
+  installpackageifmissing_complexheatmap()
   #installpackageifmissing('viridis')
   col = RColorBrewer::brewer.pal(name = "Purples", n = 5)
   if(!is.null(o$markgenesby)){
