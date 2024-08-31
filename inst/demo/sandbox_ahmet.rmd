@@ -265,7 +265,89 @@ msgf(r)
 
 
 ```{r}
+source('util.r')
+package='xxx';
+tictoc::tic();
+for(i in 1:1000){ 
+	if(!(package %in% installed.packages()[,"Package"])){ }
+}
+tictoc::toc()
 
+tictoc::tic();
+for(i in 1:1000){ 
+	if(nchar(system.file(package='xxx'))==0){ }
+}
+tictoc::toc()
+```
+```{r}
+ispackagenotinstalled=function(package){
+  #5x-10x faster than !(package %in% installed.packages()[,"Package"])
+  return(nchar(system.file(package=package))==0)
+}
+tictoc::tic();
+for(i in 1:100000){ 
+	if(!ispackagenotinstalled(package)){ } #only slightly worse (~1%) time if used as a function.
+	#if(nchar(system.file(package=package))==0){ }
+}
+tictoc::toc()
+
+```
+```{r}
+source('util.r')
+#packages=c('xxx','ggplot2')
+#installpackageifmissing(package)
+#repos='ropensci/plotly,ramnathv/rCharts,ahmetsacan/xxx';
+#installpackageifmissing_github(repos)
+packages=c('fgsea','ComplexHeatmap')
+installpackageifmissing(packages)
 
 ```
 
+```{r}
+source('packager.r')
+remove.packages('hashmap')
+neededpackages('util.r')
+```
+
+
+```{r}
+rm(list=ls())
+remove.packages('immunotar')
+devtools::install_local('C:/Users/ahmet/r.packager/immunotar.sacanlap',upgrade='never')
+```
+```{r}
+# Create a project configuration:
+proj = list(
+	dataset='__ALLHUMANSURFACEGENES__'  # The starting point is all human surface genes
+	,enrich=list(
+		# Specify the databases that the dataset should be enriched with:
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
+		# Some enrichment databases require additional inputs; e.g., Depmap database requires a disease name:
+		,depmapids='Rhabdomyosarcoma')
+);
+
+# Perform dataset enrichment and prioritization analysis:
+proj = immunotar::project_run(proj)
+
+# Print the top ranking genes:
+head(proj$datawithscore[,'score',drop=F])
+```
+
+```{r}
+source('bmes_download.r')
+bmes_download('http://sacan.biomed.drexel.edu/lic/downloadfile?file=depmapdb.sqlite','C:/downloads/temp.sqlite')
+```
+
+```{r}
+p=list();
+immunotar::io_which('demo_experiment.xlsx', c(p$dir, "{datadir}"))
+```
+```{r}
+proj = list( dataset = 'demo_experiment.xlsx' )
+immunotar::project_load( proj )
+```
+```{r}
+source('util.r')
+p=list();
+io_which('demo_experiment.xlsx', c(p$dir, "{datadir}"))
+```

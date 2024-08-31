@@ -567,6 +567,7 @@ io_pickfirstisfile=function(...,dieifnotfound=F){
   if(dieifnotfound){ stop(sprintf('None of the file choices could be located.')); }
   return(NULL);
 }
+#' @export
 io_isfileordir=function(path){
   return(!isempty(path) & file.exists(path));
 }
@@ -700,6 +701,7 @@ getdatafile=function(filename){
 #if not found and defaultdir is not given, re return the name unchanged, so the caller would then effectively interpret it to be under cwd.
 #if multiple defaultdir's are given, we search each, but use the first when the file doesn't exist.
 #defaultdir itself may contain 
+#' @export
 io_which=function(name,defaultdir=NULL){
   if(!exists('config')){ source_disabled__('config.r'); } 
 
@@ -1153,7 +1155,7 @@ arr_csv=function(s,trim=F,delim=','){
   if(length(s)>1){ return(s); } #if ss is already a list of multiple texts, no changes are made (trimming is not done).
   return(ensurecsvlist(s,trim=trim,delim=delim));
 }
-#same as arr_csv(), just a shorter name.
+#same as arr_csv(), just a shorter name. TODO: remove or rename this function. its name is confusing and sounds more like str_csv() than arr_csv().
 csv=function(s,trim=F,delim=','){
   if(is.character(trim)){ stop('You must provide a single csv text as the first argument. The second and third arguments are trim=F|T and delim=","')}
   if(length(s)>1){ return(s); } #if ss is already a list of multiple texts, no changes are made (trimming is not done).
@@ -1177,46 +1179,58 @@ str_incsv=function(ss,needle){
   return(needle %in% csv(ss));
 }
 ###############################################################
-installpackageifmissing = function( package ) {
-if(length(package)==1 && grepl(',',package,fixed=T)){ package=csv(package); }
-if(length(package)>1){for(pack in package){ installpackageifmissing(pack); }; return(invisible(NULL)) }
-package = package[!(package %in% installed.packages()[,"Package"])]
-if(length(package)){ 
-  message(cat('Installing ',package,'...'))
-  install.packages(package,dependencies = TRUE,repos = "http://cran.us.r-project.org")
+ispackageinstalled=function(package){
+  #5x-10x faster than (package %in% installed.packages()[,"Package"])
+  return(nchar(system.file(package=package))!=0)
 }
+###############################################################
+ispackagenotinstalled=function(package){
+  #5x-10x faster than !(package %in% installed.packages()[,"Package"])
+  return(nchar(system.file(package=package))==0)
+}
+###############################################################
+checkpackageinstalled=function(package){
+  package=package[unlist(lapply(package,ispackagenotinstalled))];
+  if(length(package)){ stop(sprintf('Failed to install packages [ %s ]\n', paste0(package,collapse=', '))); }
+}
+###############################################################
+installpackageifmissing = function( package, checksuccess=T, trybioc=T ) {
+if(length(package)==1 && grepl(',',package,fixed=T)){ package=unlist(strsplit(package,',')); }
+package = package[unlist(lapply(package,ispackagenotinstalled))]
+if(!length(package)){ return(invisible(NULL)); }
+message(cat('Installing [ ',paste0(package,collapse=', '),' ] ...'))
+install.packages(package,dependencies = TRUE,repos = "http://cran.us.r-project.org")
+if(trybioc){
+  package=package[unlist(lapply(package,ispackagenotinstalled))];
+  if(!length(package)){ return(invisible(NULL)); }
+  message(cat('BiocManager: installing [ ',paste0(package,collapse=', '),' ] ...'))
+  BiocManager::install(package,ask=FALSE)
+}
+if(checksuccess){ checkpackageinstalled(package); }
 #lapply(package, require, character.only=T)
 }
 ###############################################################
-installpackageifmissing_bioc = function( package ) {
-if(length(package)==1 && grepl(',',package,fixed=T)){ package=csv(package); }
-if(length(package)>1){for(pack in package){ installpackageifmissing_bioc(pack); }; return(invisible(NULL)) }
-installpackageifmissing('BiocManager')
-package = package[!(package %in% installed.packages()[,"Package"])]
-if(length(package)){ 
- message(cat('Installing ',package,'...'))
- BiocManager::install(package,ask=FALSE)
+installpackageifmissing_bioc = function( package, checksuccess=T ) {
+if(length(package)==1 && grepl(',',package,fixed=T)){ package=unlist(strsplit(package,',')); }
+package = package[unlist(lapply(package,ispackagenotinstalled))]
+if(!length(package)){ return(invisible(NULL)); }
+installpackageifmissing('BiocManager',trybioc=F)
+message(cat('BiocManager: installing [ ',paste0(package,collapse=', '),' ] ...'))
+BiocManager::install(package,ask=FALSE)
+if(checksuccess){ checkpackageinstalled(package); }
 }
-#lapply(package, require, character.only=T)
-}
-
 ###############################################################
-installpackageifmissing_github = function( repo, package=NULL ) {
-  if(is.null(package)&&length(repo)==1 && grepl(',',repo,fixed=T)){ repo=csv(repo); }
-  if(is.null(package)&&length(repo)>1){for(r in repo){ installpackageifmissing_github(r); }; return(invisible(NULL)) }
-  
- if(is.null(package)){ package=basename(repo); }
- I=!(package %in% installed.packages()[,"Package"]);
- package = package[I]
- repo = repo[I]
- if(length(repo)){
-   installpackageifmissing('devtools')
-   message(cat('Installing ',package,'...'))
-   for(i in 1:length(repo)){
-     devtools::install_github(repo[i],quiet=TRUE,dependencies=TRUE,upgrade_dependencies=TRUE)
-   }
- }
- #lapply(package, require, character.only=T)
+installpackageifmissing_github = function( repo, package=NULL, checksuccess=T ) {
+if(length(repo)==1 && grepl(',',repo,fixed=T)){ repo=unlist(strsplit(repo,',')); }
+if(is.null(package)){ package=basename(repo); }
+I=unlist(lapply(package,ispackagenotinstalled));
+package = package[I]; repo=repo[I];
+if(!length(package)){ return(invisible(NULL)); }
+installpackageifmissing('devtools')
+message(cat('Devtools-github installing [ ',paste0(package,collapse=', '),' ] ...'))
+#devtools::install_github(repo,quiet=TRUE,dependencies=TRUE,upgrade_dependencies=TRUE)
+devtools::install_github(repo,quiet=TRUE,dependencies=TRUE,upgrade_dependencies=FALSE,upgrade='never')
+if(checksuccess){ checkpackageinstalled(package); }
 }
 
 ###############################################################
@@ -1761,6 +1775,7 @@ sys_userdownloaddir=function(subdir=NULL){
   }
   return(sys_dirorsubdir_(dir,subdir));
 }
+#' @export
 sys_datadir=function(subdir=NULL){
   if(!exists('config')){ source_disabled__('config.r'); } 
   dir=config('datadir');

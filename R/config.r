@@ -19,6 +19,7 @@ source_disabled__('util.r');
 
 ###############################################################
 #Automatically replace {datadir}, {biodbdir}, and {userdatadir} with their config values.
+#' @export
 config_autofill=function(s){
   if(!is.character(s)||length(s)!=1){ return(s); }
   ms=stringr::str_extract_all(s,'\\{([^\\}]*dir)\\}');

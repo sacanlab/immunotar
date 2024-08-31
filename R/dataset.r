@@ -42,7 +42,7 @@ dataset_load=function(dset,basedir=NULL, ...){
   }
   else if('datafile' %in% names(dset)){    
     datafile=dset$datafile;
-    datafile=io_which(datafile,c(dir,'{datadir}'))    
+    datafile=io_which(datafile,c(basedir,'{datadir}'))  
     cat(paste0('Reading datafile [',datafile,']...\n'));
   	source_disabled__('util.r')
     dset$data=data_readfile(datafile,rowNames=T,header=T); #todo: need to check how the io_readfile() behaves when datafile is not an xlsx file -- will it still support rowNames=T ?
