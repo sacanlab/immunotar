@@ -2137,7 +2137,7 @@ io_rsync=function(src,dest,include=c(),exclude=c(),dryrun=F,echo=T){
 	#s=system2(rsyncexe,shQuote(args),stdout=echo,stderr=echo);
   s=system2(rsyncexe,shQuote(args),stdout=T,stderr=T); #for some bizarre reason, unless we capture stdout/stderr, rsync doesn't actually work. So, we need to get output even if we don't display it.
   if(echo){ catf(str_lined(s)); }
-  if(!isempty(excludefromtempfile)){ file.remove(excludefromtempfile); }
+  #if(!isempty(excludefromtempfile)){ file.remove(excludefromtempfile); }
 }
 
 

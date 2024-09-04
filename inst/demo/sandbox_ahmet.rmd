@@ -379,7 +379,8 @@ project_rankplot(proj, knownpositives=proj$knownpositives, includequantile=T)
 
 
 ```{r}
-pkgdir='C:/Users/ahmet/r.packager/immunotar.sacanlap';
+source('immunotar_makepackage.r')
+pkgdir=immunotar_makepackage(dotasks='getpkgdir')
 		try( { detach(paste0('package:','immunotar'), unload=TRUE); } )
 		try( { remove.packages('immunotar'); } )
 ```
@@ -390,13 +391,14 @@ devtools::install(pkgdir)
 devtools::install_github('https://github.com/sacanlab/immunotar')
 ```
 ```{r}
-pkgdir='C:/Users/ahmet/r.packager/immunotar.sacanlap';
+source('immunotar_makepackage.r')
+pkgdir=immunotar_makepackage(dotasks='getpkgdir')
 
-vdir=io_name(pkgdir,'vignettes');
-origfiles=list.files(vdir,pattern='*\\.rmd\\.orig$');
-for(origfile in origfiles){
-	rmdfile=gsub('\\.orig$','',origfile)
-	knitr::knit(io_name(vdir,origfile), output = io_name(vdir,rmdfile))	
-}
+#immunotar_makepackage(dotasks='vignettes')
+buildvignettes(pkgdir)
+```
 
+```{r}
+source('immunotar_makepackage.r')
+immunotar_makepackage(dotasks='rsync')
 ```
