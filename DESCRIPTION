@@ -26,6 +26,7 @@ DevComment2: You do not need to list the Imports above manually. running package
   will automatically add the required packages to the list.
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
+Config/build/clean-inst-doc: no
 Imports: DBI, RSQLite, stringr, yaml, plyr, tidyverse, data.table, readxl, writexl,
   dplyr, ggplot2, scales, GA, lme4, optimx, tictoc, base, openxlsx, circlize, ggrepel,
   grid, RColorBrewer, stringi, tools, fs, reshape, ggVennDiagram, shiny, shinyjs,

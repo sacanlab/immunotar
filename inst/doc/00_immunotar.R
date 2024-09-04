@@ -1,0 +1,108 @@
+## ----include = FALSE----------------------------------------------------------
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+## -----------------------------------------------------------------------------
+rm(list=ls())
+##Can use the depmap function to search what cell-lines associated to phenotype is found in depmap 
+immunotar::depmapdb_searchsamples('rhabdomyosarcoma')
+##This depmap function will extract the dependencies for each gene within each of the cell lines in the queried phenotype. The cell-line is the "depmapid" column and the name is extracted from the function about  
+dep=immunotar::depmapdb_getgenedependency('rhabodmyosarcoma')
+head(dep)
+
+##Search through Therapeutic drug database (TTD) and the The Database of Antibody-drug Conjugates (ADC-db) on diseases that are included and get the exact name of the disease to query further 
+immunotar::theratardb_searchdisease('rhabdomyosarcoma')
+immunotar::theratardb_disease2genesymbols('rhabdomyosarcoma')
+
+##Diseases like T-cell leukemia may have many subtypes included in these databases so we recommend searching through what is included and how it is referred to if you plan to include in your dataset
+immunotar::theratardb_searchdisease('t-cell')
+
+##This will include a search with all disease names that have the word t-cell in it. 
+immunotar::theratardb_disease2genesymbols('%t-cell%')
+
+
+
+## -----------------------------------------------------------------------------
+##This project will list all genes in the human surface genes and enriches with the databases listed under enrich. Enrichment with databases such as depmap will need an additional argument of depmapids to give immunotar a phenotype to query 
+
+proj = list(
+	dataset='__ALLHUMANSURFACEGENES__'  # The starting point is all human surface genes
+	,enrich=list(
+		# Specify the databases that the dataset should be enriched with:
+		enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
+		# Some enrichment databases require additional inputs; e.g., Depmap database requires a disease name:
+		,depmapids='Rhabdomyosarcoma')
+);
+
+##Perform dataset enrichment and prioritization analysis:
+proj = immunotar::project_run(proj)
+
+###Looking at the resulting data with score dataframe:  
+head(proj$datawithscore)
+
+##To view the top 10 ranked genes in the dataset and a heatmap looking at the scaled values of the highest weighted features 
+immunotar::project_resultheatmap(proj)
+
+##To view validated targets in the dataset and identify where the targets are ranked using IMMUNOTAR, Add in the validated postives and negatives into the project to mark in the rank plot 
+proj$validatedpositives=c('CCR5', 'CTLA4')
+proj$validatednegatives=c('BOK')
+immunotar::project_rankplot(proj)
+
+## -----------------------------------------------------------------------------
+proj = list( dataset = system.file("data", "demo_experiment.xlsx", package="immunotar"))
+
+# Running IMMUNOTAR without specific enrichment data-bases listed will enrich with the default databases: "gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface"
+proj = immunotar::project_run( proj )
+
+#Below you can print all the options that are run within the project. The project will run with optimized parameters by default. If you do not want to run with optimized parameters, feed in "importoptimizedparams=F" in the project_run command. 
+proj$enrich
+proj$colweight
+proj$colcurve
+proj$colrescale
+proj$rescale
+proj$importoptimizedparams
+
+head(proj$datawithscore[,'score',drop=F])
+
+## -----------------------------------------------------------------------------
+#The yaml file itself has comments describing the options and how to set them. 
+proj.config = yaml::read_yaml(system.file("data", "demo_project.yml", package="immunotar"))
+
+#Can run through the yml file 
+proj = immunotar::project_run(proj.config)
+
+#OR can also feed the yml file directly from the folder 
+proj = immunotar::project_run(system.file("data", "demo_project.yml", package="immunotar"))
+
+#User can also use project_load which loads in the dataset without enriching with other databases. 
+proj.load=immunotar::project_load(system.file("data", "demo_project.yml", package="immunotar"))
+#You can edit the options post loading in a project such as below 
+proj.load$importdefaultparams=F
+proj.load$importdefaultsparams=F
+proj.load$enrich$enrichtypes='gtex,evodevo_pediatric,healthyprot,depmap,compartments_sp,cirfess_spc'
+proj.load$knownpositives=c('ALK', 'MEGF10', 'GPC2', 'CD276', 'CD19')
+proj = immunotar::project_run(proj.load)
+
+
+## -----------------------------------------------------------------------------
+#To optimize you need to have a project with knownpositives or else the optimization scheme will produce the same weights vector. By default the optimization only happens on the weight vector. 
+
+proj.load=immunotar::project_load(system.file("data", "demo_project.yml", package="immunotar"))
+proj.load$knownpositives=c('ALK', 'MEGF10', 'GPC2', 'CD276', 'CD19')
+proj = immunotar::project_run(proj.load)
+
+#You can optimize multiple projects at once by include them all in  a list. The input to the optimization function has to be a list, even if it just contains a single project. 
+
+ps=list(proj)
+
+#Different parameters can be applied to the optimization such as the relative tollerance to stop optimization, enforcing the sign of the original weight vector that is being optimized and the limits of the factor assigned (lower and upper). The trace function prints the progress of the optimization and the lockweights enables the user to ask the optimization algorithm to not alter the weights of certain parameters. This can be done by giving the lockweights a vector of parameter names
+
+optim_params=immunotar::projects_optimweightsandcurves(ps, method="Nelder-Mead", reltol=0.001, enforcesign=T, lower=-3, upper=3, trace=0, lockweights='')
+
+#The new optimized weights 
+optim_params$weights
+
+
+

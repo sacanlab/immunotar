@@ -375,3 +375,28 @@ project_resultheatmap(proj, withexprcol = F, nc=2)
 ```{r}
 project_rankplot(proj, knownpositives=proj$knownpositives, includequantile=T)
 ```
+
+
+
+```{r}
+pkgdir='C:/Users/ahmet/r.packager/immunotar.sacanlap';
+		try( { detach(paste0('package:','immunotar'), unload=TRUE); } )
+		try( { remove.packages('immunotar'); } )
+```
+```{r}
+stop('This section not intended for whole-section Run. Run one or the other of these lines individually.')
+
+devtools::install(pkgdir)
+devtools::install_github('https://github.com/sacanlab/immunotar')
+```
+```{r}
+pkgdir='C:/Users/ahmet/r.packager/immunotar.sacanlap';
+
+vdir=io_name(pkgdir,'vignettes');
+origfiles=list.files(vdir,pattern='*\\.rmd\\.orig$');
+for(origfile in origfiles){
+	rmdfile=gsub('\\.orig$','',origfile)
+	knitr::knit(io_name(vdir,origfile), output = io_name(vdir,rmdfile))	
+}
+
+```
