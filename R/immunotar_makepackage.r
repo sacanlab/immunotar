@@ -12,7 +12,7 @@ immunotar_makepackage=function(...,dryrun=F,echo=T){
   	,rsync_exclude_more=arr_csv('Archive/,shinyapp/,sandbox.r,sandbox.rmd,packager.r,packager_demo.rmd,mysetwd.r,config.*.yml,git.r')
 		,excludeimports='fgsea,ComplexHeatmap' #devtools::install_github fails to install these, but biocmanager install works. These get installed while running immunotar (not while installing).
   	,rsyncmore=list(
-  		list(src=io_name(thisdir(),'../data/'),dest='inst/data/', include=c('demo*','optimized*','project_defaultparams.yml','project_optimizedparams.yml'),exclude=c('*/*') )
+  		list(src=io_name(thisdir(),'../data/'),dest='inst/data/', include=c('demo*','optimized*','project_defaultparams.yml','project_optimizedparams.yml','pancancer_map.xlsx'),exclude=c('*/*') )
   		,list(src=io_name(thisdir()),dest='inst/', include=c('config.yml') )
   		,list(src=io_name(thisdir(), '../vignettes/'), dest='vignettes/')
   		,list(src=io_name(thisdir(), '../img/'), dest='img/')
