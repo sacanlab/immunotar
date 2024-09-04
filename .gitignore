@@ -1,2 +1,5 @@
 /doc/
 /Meta/
+
+#When building vignettes, an optim is run which changes the log file. Ignoring .log.xlsx, whose contents remain the same, but Excel metadata changes so the file appears to change unnecessarily.
+/data/*.log.xlsx
