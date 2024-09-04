@@ -5,7 +5,7 @@ DISABLED_output:
     df_print: paged
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{immunotar}
+  %\VignetteIndexEntry{ImmunoTar - General Usage}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

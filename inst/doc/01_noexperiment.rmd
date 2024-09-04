@@ -5,7 +5,7 @@ DISABLED_output:
     df_print: paged
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{immunotar}
+  %\VignetteIndexEntry{Prioritize genes for a cancer type without providing additional experimental data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
