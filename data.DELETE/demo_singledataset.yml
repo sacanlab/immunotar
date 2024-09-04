@@ -1,0 +1,13 @@
+# See demo_project.yml for an explanation of the configuration parameters.
+importfiles:
+ - 'project_defaultparams.yml'
+ - 'project_optimizedparams.yml'
+
+dataset:
+  datafile: 'demo_experiment.xlsx'
+  handlenan: 0 #replace NA's with a value. default is 'none', which leaves NA's as is. see data_handlenan() for options.
+  rescale: 'log2,percentile' #see data_rescale() for options.
+  #summarytypes: 'mean,numlowexpressed' #by default, we summarize a dataset. To prevent data summarization, use summarytypes='', or define dosummarize=0
+
+knownpositives: 'GPC2,MEGF10'
+#outfile: 'demo_project_result.xlsx'

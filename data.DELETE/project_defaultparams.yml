@@ -1,0 +1,36 @@
+handlenan: '0ormin'   #change default handlenan. (if not given in a project configuration, the code defaults to 'none'). If handlenan=0 and a column contains negative values, the code will print a warning. If handlenan='0ormin', we use the min value if there are any negative values or 0 if everything is positive.
+colhandlenan: #specify handlenan for individual columns
+  healthyprot: 'min'
+
+rescale: 'percentile'
+colrescale:
+  cirfess: 'rangemap0100'
+  compartments: 'rangemap0100'
+  depmap: 'rangemap0100'
+  opentargetsurface: 'rangemap0100'
+  theratarsurface: 'rangemap0100'
+
+enrich: #parameters to be passed into data_enrich()
+#only passing in databases that don't need additional parameters to enrich with 
+  #depmap is not included in this default list of enrichtypes, because it would require a specific depmapid to also be given.
+  #if you would like to include depmap as an enrichment type in your project, you must change this enrichtypes property to also include 'depmap'
+  enrichtypes: 'gtex,evodevo_pediatric,healthyprot,compartments_sp,cirfess_spc,uniprot,opentargetsurface'  #by default, we use data_enrich. If you do not want to use enrich, define doenrich=0 as a top level attribute, or define enrich.enrichtypes=''
+  #some enrich types require additional arguments. provide them here.
+  #depmapids: 'Rhabdomyosarcoma' #this can be numeric id(s) or text(s) to search.
+  #goids: 'Notch binding'
+  #go_collate: 'merge' #separate|merge determines whether we create separate columns for each goid.
+
+colweight: #specify weight for individual columns
+  gtex: "-1 each" 
+  evodevo_pediatric: "-1 each"
+  healthyprot: "-1 each"
+  compartments_sp: +1
+  cirfess_spc: +1
+  uniprot: +1
+  expr: "+1 each"
+  expr_numlowexpressed: -1
+  opentargetsurface: +1
+  theratarsurface: +1
+  depmap: +1
+
+curve: 0
