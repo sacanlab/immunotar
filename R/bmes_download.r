@@ -1,4 +1,5 @@
 bmes_download=function(url,destfile){
+  options(timeout = 300)
   if(!file.exists(destfile)){
     tempdestfile=paste0(destfile,'.crdownload');
     if(download.file(url,tempdestfile,method="auto",mode="wb")!=0){
