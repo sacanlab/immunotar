@@ -12,6 +12,65 @@ biodb_dir=function(){
   return(io_mkdirif(dir));
 }
 ###############################################################
+biodb_url_config=function(dbname,sqlitefile){
+  if(!exists('config')){ source_disabled__('config.r'); } 
+  return( config(paste0(dbname,'url'))); #e.g., config("depmapdburl")
+}
+biodb_url_sacan=function(dbname,sqlitefile){
+  #try sqlitefile and dbname.sqlite
+  oldtimeout=getOption('timeout');
+  options(timeout=10)
+  s = paste0(readLines(paste0('http://sacan.biomed.drexel.edu/lic/candownloadfile?file=', basename(sqlitefile)),warn=F),collapse="\n");
+  options(timeout=oldtimeut)
+  if(!grepl('<candownload>yes</candownload>',s,fixed=T) && basename(sqlitefile) != paste0(dbname,'.sqlite')){
+    s = paste0(readLines(paste0('http://sacan.biomed.drexel.edu/lic/candownloadfile?file=', dbname, '.sqlite'),warn=F),collapse="\n");
+  }
+  if(grepl('<candownload>yes</candownload>',s,fixed=T)){
+    url=gsub('^.*<url>(.*)</url>.*$','\\1',s)
+    return(url);
+  }
+  return(NULL);
+}
+biodb_url_osf=function(dbname,sqlitefile){  
+  s = paste0(readLines('https://api.osf.io/v2/nodes/x48nm/files/osfstorage/?filter%5Bname%5D=&format=json&page=1&sort=name',warn=F),collapse="\n");
+  installpackageifmissing('rjson')
+  a=rjson::fromJSON(s);
+
+  for(e in a$data){
+    #try sqlitefile and dbname.sqlite
+  	if(e$attributes$name %in% c(paste0(dbname,'.sqlite'),basename(sqlitefile))){
+  		return(e$links$download);
+  	}
+  }
+}
+
+#repos can be one of config|sacan|osf. when repos is not given, we get it from config() and default to config,sacan,osf.
+biodb_downloaddbfile=function(dbname,sqlitefile=NULL,repos=NULL){
+  if(is.null(sqlitefile)){ sqlitefile=biodb_file(dbname,FALSE); }
+
+  reposwasnull=is.null(repos);
+  if(is.null(repos)){
+    if(!exists('config')){ source_disabled__('config.r'); }
+    repos=config('biodb.repos',default=c('config,sacan,osf'));
+  }
+  repos=ensurecsvlist(repos);
+  if(isempty(repos)){ stop('Unexpected error. no repositories available for download. You may need to set biodb.repos in config.yml.'); }
+  for(repo in repos){
+    url=NULL;
+    tryCatch({ url=do.call(paste0('biodb_url_',repo),list(dbname,sqlitefile)) }, error=function(e){ });
+    if(is.null(url)&&!reposwasnull){
+      warnf('A url for database [%s] could not be obtained from repository [%s].',dbname,url)
+    }
+    if(!is.null(url)){
+      message(paste0('Downloading [',dbname,'] --> [',sqlitefile,'] from repository [',repo,']. Downloading may take a while (minutes to hours, depending on file size and your connection speed)...'))
+      dir.create(dirname(sqlitefile), showWarnings = FALSE)
+      tryCatch({  sqlitefile = downloadurl(url,sqlitefile); },error=function(e){ warnf('Download failed with message: %s',e$message); });
+      return(sqlitefile)
+    }
+  }
+  stop(paste0('I could not download the database file for [',dbname,'] from any of the repositories [',str_csv(repos),'].\nThe repository server(s) may be down or you may not be connected to the internet.\n',var_pick(config(paste0(dbname,'url')),'',paste0('You may manually set the downloadurl configuration setting for [',dbname,'url].\n')),'You may manually save the database file to [',sqlitefile,'].'));
+}
+
 #' @export
 biodb_file=function(dbname,downloadifmissing=T){
   if(!exists('config')){ source_disabled__('config.r'); } 
@@ -27,22 +86,7 @@ biodb_file=function(dbname,downloadifmissing=T){
     fun(sqlitefile);
   }
   if(downloadifmissing && !file.exists(sqlitefile)){
-    url = config(paste0(dbname,'url')); #e.g., config("depmapdburl")
-    if(is.null(url)){
-      s = paste0(readLines(paste0('http://sacan.biomed.drexel.edu/lic/candownloadfile?file=', basename(sqlitefile)),warn=F),collapse="\n");
-      if(!grepl('<candownload>yes</candownload>',s,fixed=T) && basename(sqlitefile) != paste0(dbname,'.sqlite')){
-        s = paste0(readLines(paste0('http://sacan.biomed.drexel.edu/lic/candownloadfile?file=', dbname, '.sqlite'),warn=F),collapse="\n");
-      }
-      if(grepl('<candownload>yes</candownload>',s,fixed=T)){
-        url=gsub('^.*<url>(.*)</url>.*$','\\1',s)
-      }
-      else{ stop(paste0('Database file for [',dbname,'] not available and no URL to download the database is available. You need to set [',dbname,'url] in config.yml')); }
-    }
-    #TODO: Replace this with the new download() function.
-    source_disabled__('bmes_download.r')
-    message(paste0('I will attempt to download the database [',dbname,'] --> [',sqlitefile,']. Downloading may take a while (minutes to hours, depending on file size and your connection speed)...'))
-    dir.create(dirname(sqlitefile), showWarnings = FALSE)
-    sqlitefile = bmes_download(url,sqlitefile);
+    sqlitefile=biodb_downloaddbfile(dbname,sqlitefile)
   }
   #stop(sqlitefile);
   #print(sqlitefile);

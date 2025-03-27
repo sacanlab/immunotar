@@ -160,6 +160,11 @@ theratardb_disease2genesymbols('%', minstatusscore=1)
 
 
 ```
+```{r}
+theratardb_searchdisease('glioblastoma')
+
+xls_write(theratardb_disease2genesymbols('glioblastoma', asframe=T), 'gliblastoma.targets.xlsx')
+```
 
 ```{r}
 #source('theratardb.r')

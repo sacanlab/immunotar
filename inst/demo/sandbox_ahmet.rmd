@@ -3,6 +3,12 @@ title: "R Notebook"
 output: html_document
 ---
 ```{r}
+s="a
+b"
+s
+```
+
+```{r}
 source('util.r')
 
 file='temp.fst';
