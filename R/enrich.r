@@ -224,10 +224,10 @@ enrich_opentargetsurface = function(d){
 enrich_theratar=function(d, diseases='%', moa=NULL,  mergefunc=max, onlysurface=F,immunomult=1,immunoadd=0){
   dthera=theratardb_disease2genesymbols(diseases, minstatusscore=1, moa = moa, asframe=c('genesymbol','higheststatus_'), immunomult=immunomult) 
   dthera = data_combineduplicaterows( dthera, idcolumn='genesymbol', func=mergefunc )
-  if(onlysurface){ dthera_surface=getsurfacegenes(dthera); }
+  if(onlysurface){ dthera=getsurfacegenes(dthera); }
 
   #TODO: Is unique() below necessary? It gets the unique rows of dthera_surface. But if we already applied a merge (data_combineduplicaterows), there should no longer be any duplicates.
-  return(enrich_merge(d, unique(dthera_surface), 'theratarsurface_'))
+  return(enrich_merge(d, unique(dthera), 'theratarsurface_'))
 }
 
 #' @export
