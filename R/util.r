@@ -1437,8 +1437,8 @@ parallel_maxmemory=function(maxmemory=NULL){
 ###############################################################
 #how much memory should each child node be allocated?
 parallel_maxchildworkermemory=function(numworkers){
-  installpackageifmissing('pryr');
-  mymemuse=as.numeric(pryr::mem_used());
+  installpackageifmissing('lobstr');
+  mymemuse=as.numeric(lobstr::mem_used());
   ret=max(floor((parallel_maxmemory()-mymemuse)/numworkers),0);
   return(ret)
 }
@@ -1453,8 +1453,8 @@ parallel_maxchildworkers=function(numworkers){
   #changed to subtract numworkers from maxworkers, to better match memory availability.
   #subworkers = max(floor((parallel_maxworkers()-numworkers)/numworkers),0); 
 
-  installpackageifmissing('pryr');
-  mymemuse=as.numeric(pryr::mem_used()); #this is how much memory we use. Assume each of the children will also need this much memory.
+  installpackageifmissing('lobstr');
+  mymemuse=as.numeric(lobstr::mem_used()); #this is how much memory we use. Assume each of the children will also need this much memory.
   subworkersbymem = max(floor((parallel_maxmemory()-mymemuse)/mymemuse),0);
   #msgf(subworkersbymem);
   return(min(subworkers,subworkersbymem));
